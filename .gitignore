@@ -195,6 +195,7 @@ fabric.properties
 !engine.jar
 
 *.bc25
+<<<<<<< HEAD
 
 ###### LATEX DOCS ######
 
@@ -215,3 +216,6 @@ docs/**/*.out
 docs/**/*.run.xml
 docs/**/*.synctex.gz
 docs/**/*.toc
+=======
+*.exe
+>>>>>>> 6ac9497 (docs: add exctracted document spesification to repo)
