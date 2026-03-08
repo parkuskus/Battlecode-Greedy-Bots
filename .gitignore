@@ -196,6 +196,9 @@ fabric.properties
 
 *.bc25
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> f74a622 (feat: add LaTeX build artifacts to .gitignore for cleaner documentation builds)
 
 ###### LATEX DOCS ######
 
@@ -215,7 +218,11 @@ docs/**/*.lot
 docs/**/*.out
 docs/**/*.run.xml
 docs/**/*.synctex.gz
+<<<<<<< HEAD
 docs/**/*.toc
 =======
 *.exe
 >>>>>>> 6ac9497 (docs: add exctracted document spesification to repo)
+=======
+docs/**/*.toc
+>>>>>>> f74a622 (feat: add LaTeX build artifacts to .gitignore for cleaner documentation builds)
