@@ -195,3 +195,23 @@ fabric.properties
 !engine.jar
 
 *.bc25
+
+###### LATEX DOCS ######
+
+# Ignore LaTeX build artifacts under docs/
+docs/**/*.aux
+docs/**/*.bbl
+docs/**/*.bcf
+docs/**/*.blg
+docs/**/*.fdb_latexmk
+docs/**/*.fls
+docs/**/*.idx
+docs/**/*.ilg
+docs/**/*.ind
+docs/**/*.lof
+docs/**/*.log
+docs/**/*.lot
+docs/**/*.out
+docs/**/*.run.xml
+docs/**/*.synctex.gz
+docs/**/*.toc
