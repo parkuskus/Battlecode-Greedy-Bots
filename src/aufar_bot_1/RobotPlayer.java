@@ -1,4 +1,4 @@
-package bot_1;
+package aufar_bot_1;
 
 import java.util.Random;
 
