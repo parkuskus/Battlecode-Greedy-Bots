@@ -7,10 +7,9 @@ import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
 
 public class Communication {
-    public static final int MSG_RUIN_FOUND = 1;
-    public static final int MSG_ENEMY_TOWER = 2;
-    public static final int MSG_NEED_PAINT = 3;
-    public static final int MSG_ENEMY_CLUSTER = 4;
+    public static final int MSG_RUIN_CLAIM = 1;
+    public static final int MSG_ENEMY_TOWER_SEEN = 2;
+    public static final int MSG_URGENT_MOPPER = 3;
 
     public static int encode(int type, MapLocation loc, int extra) {
         return (type << 28) | (loc.x << 22) | (loc.y << 16) | (extra & 0xFFFF);
@@ -34,14 +33,32 @@ public class Communication {
         return msg & 0xFFFF;
     }
 
-    public static boolean broadcastToNearbyAllies(RobotController rc, int encodedMsg) throws GameActionException {
+    /**
+     * Sends one message to the nearest reachable ally. Kept intentionally minimal
+     * to save bytecode and align with limited message utility this season.
+     */
+    public static boolean sendHighValueMessage(RobotController rc, int encodedMsg) throws GameActionException {
         RobotInfo[] allies = rc.senseNearbyRobots(-1, rc.getTeam());
+        MapLocation myLoc = rc.getLocation();
+
+        RobotInfo best = null;
+        int bestDist = Integer.MAX_VALUE;
+
         for (RobotInfo ally : allies) {
             MapLocation allyLoc = ally.getLocation();
-            if (rc.canSendMessage(allyLoc, encodedMsg)) {
-                rc.sendMessage(allyLoc, encodedMsg);
-                return true;
+            if (!rc.canSendMessage(allyLoc, encodedMsg)) {
+                continue;
             }
+            int dist = myLoc.distanceSquaredTo(allyLoc);
+            if (dist < bestDist) {
+                bestDist = dist;
+                best = ally;
+            }
+        }
+
+        if (best != null) {
+            rc.sendMessage(best.getLocation(), encodedMsg);
+            return true;
         }
         return false;
     }

@@ -1,5 +1,6 @@
 package athillabot2;
 
+import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapInfo;
@@ -15,32 +16,132 @@ public class Navigation {
     static final Direction[] directions = RobotPlayer.directions;
     static final Random rng = RobotPlayer.rng;
 
+    private enum Symmetry {
+        ROTATIONAL,
+        VERTICAL,
+        HORIZONTAL
+    }
+
+    private static boolean canRotational = true;
+    private static boolean canVertical = true;
+    private static boolean canHorizontal = true;
+
+    public static void updateSymmetryModel(RobotController rc) throws GameActionException {
+        MapInfo[] nearbyTiles = rc.senseNearbyMapInfos();
+
+        for (MapInfo tile : nearbyTiles) {
+            if (Clock.getBytecodesLeft() < 2200) {
+                return;
+            }
+
+            MapLocation loc = tile.getMapLocation();
+
+            if (canRotational) {
+                MapLocation mirror = mirror(rc, loc, Symmetry.ROTATIONAL);
+                if (rc.onTheMap(mirror) && rc.canSenseLocation(mirror)) {
+                    MapInfo mirrorInfo = rc.senseMapInfo(mirror);
+                    if (tile.isWall() != mirrorInfo.isWall() || tile.hasRuin() != mirrorInfo.hasRuin()) {
+                        canRotational = false;
+                    }
+                }
+            }
+
+            if (canVertical) {
+                MapLocation mirror = mirror(rc, loc, Symmetry.VERTICAL);
+                if (rc.onTheMap(mirror) && rc.canSenseLocation(mirror)) {
+                    MapInfo mirrorInfo = rc.senseMapInfo(mirror);
+                    if (tile.isWall() != mirrorInfo.isWall() || tile.hasRuin() != mirrorInfo.hasRuin()) {
+                        canVertical = false;
+                    }
+                }
+            }
+
+            if (canHorizontal) {
+                MapLocation mirror = mirror(rc, loc, Symmetry.HORIZONTAL);
+                if (rc.onTheMap(mirror) && rc.canSenseLocation(mirror)) {
+                    MapInfo mirrorInfo = rc.senseMapInfo(mirror);
+                    if (tile.isWall() != mirrorInfo.isWall() || tile.hasRuin() != mirrorInfo.hasRuin()) {
+                        canHorizontal = false;
+                    }
+                }
+            }
+        }
+    }
+
+    public static MapLocation predictEnemyFromAlly(RobotController rc, MapLocation allyReference) {
+        if (allyReference == null) {
+            return null;
+        }
+
+        Symmetry symmetry = getLikelySymmetry();
+        return mirror(rc, allyReference, symmetry);
+    }
+
+    private static Symmetry getLikelySymmetry() {
+        if (canRotational) {
+            return Symmetry.ROTATIONAL;
+        }
+        if (canVertical) {
+            return Symmetry.VERTICAL;
+        }
+        return Symmetry.HORIZONTAL;
+    }
+
+    private static MapLocation mirror(RobotController rc, MapLocation loc, Symmetry symmetry) {
+        int w = rc.getMapWidth();
+        int h = rc.getMapHeight();
+
+        return switch (symmetry) {
+            case ROTATIONAL -> new MapLocation(w - 1 - loc.x, h - 1 - loc.y);
+            case VERTICAL -> new MapLocation(w - 1 - loc.x, loc.y);
+            case HORIZONTAL -> new MapLocation(loc.x, h - 1 - loc.y);
+        };
+    }
+
     public static boolean moveToward(RobotController rc, MapLocation target) throws GameActionException {
+        return moveToward(rc, target, true);
+    }
+
+    public static boolean moveToward(RobotController rc, MapLocation target, boolean preferAllyPaint) throws GameActionException {
         if (target == null || !rc.isMovementReady()) {
             return false;
         }
 
         MapLocation myLoc = rc.getLocation();
-        Direction bestDir = myLoc.directionTo(target);
-        if (bestDir == Direction.CENTER) {
+        Direction toward = myLoc.directionTo(target);
+        if (toward == Direction.CENTER) {
             return false;
         }
 
         Direction[] tryDirs = {
-            bestDir,
-            bestDir.rotateLeft(),
-            bestDir.rotateRight(),
-            bestDir.rotateLeft().rotateLeft(),
-            bestDir.rotateRight().rotateRight(),
-            bestDir.rotateLeft().rotateLeft().rotateLeft(),
-            bestDir.rotateRight().rotateRight().rotateRight(),
+            toward,
+            toward.rotateLeft(),
+            toward.rotateRight(),
+            toward.rotateLeft().rotateLeft(),
+            toward.rotateRight().rotateRight(),
+            toward.rotateLeft().rotateLeft().rotateLeft(),
+            toward.rotateRight().rotateRight().rotateRight()
         };
 
+        Direction best = null;
+        int bestScore = Integer.MIN_VALUE;
+
         for (Direction dir : tryDirs) {
-            if (rc.canMove(dir)) {
-                rc.move(dir);
-                return true;
+            if (!rc.canMove(dir)) {
+                continue;
             }
+
+            MapLocation next = myLoc.add(dir);
+            int score = scoreMoveTile(rc, next, target, preferAllyPaint);
+            if (score > bestScore) {
+                bestScore = score;
+                best = dir;
+            }
+        }
+
+        if (best != null) {
+            rc.move(best);
+            return true;
         }
         return false;
     }
@@ -80,18 +181,19 @@ public class Navigation {
             int score = 0;
 
             if (info.getPaint() == PaintType.EMPTY) {
-                score += 4;
+                score += 9;
             } else if (info.getPaint().isEnemy()) {
-                score += 5;
+                score += 8;
             } else {
-                score += 1;
-            }
-
-            if (info.hasRuin()) {
                 score += 2;
             }
 
-            score = score * 10 + rng.nextInt(10);
+            if (info.hasRuin()) {
+                score += 3;
+            }
+
+            score += rng.nextInt(6);
+
             if (score > bestScore) {
                 bestScore = score;
                 bestDir = dir;
@@ -116,16 +218,18 @@ public class Navigation {
         int nearestDist = Integer.MAX_VALUE;
 
         for (MapInfo tile : tiles) {
-            if (tile.getPaint().isEnemy()) {
-                int dist = myLoc.distanceSquaredTo(tile.getMapLocation());
-                if (dist < nearestDist) {
-                    nearestDist = dist;
-                    nearestEnemyPaint = tile.getMapLocation();
-                }
+            if (!tile.getPaint().isEnemy()) {
+                continue;
+            }
+
+            int dist = myLoc.distanceSquaredTo(tile.getMapLocation());
+            if (dist < nearestDist) {
+                nearestDist = dist;
+                nearestEnemyPaint = tile.getMapLocation();
             }
         }
 
-        return moveToward(rc, nearestEnemyPaint);
+        return moveToward(rc, nearestEnemyPaint, true);
     }
 
     public static MapLocation findNearestAllyTower(RobotController rc) throws GameActionException {
@@ -151,13 +255,27 @@ public class Navigation {
     }
 
     public static MapLocation findNearestRuin(RobotController rc) throws GameActionException {
+        return findNearestRuin(rc, null, -1000, 0);
+    }
+
+    public static MapLocation findNearestRuin(
+            RobotController rc,
+            MapLocation avoidRuin,
+            int avoidRound,
+            int avoidTtl
+    ) throws GameActionException {
         MapLocation myLoc = rc.getLocation();
         MapInfo[] nearbyTiles = rc.senseNearbyMapInfos();
+        int round = rc.getRoundNum();
 
         MapLocation nearest = null;
         int bestDist = Integer.MAX_VALUE;
 
         for (MapInfo tile : nearbyTiles) {
+            if (Clock.getBytecodesLeft() < 2300) {
+                break;
+            }
+
             if (!tile.hasRuin()) {
                 continue;
             }
@@ -165,6 +283,10 @@ public class Navigation {
             MapLocation ruinLoc = tile.getMapLocation();
             RobotInfo occupant = rc.senseRobotAtLocation(ruinLoc);
             if (occupant != null) {
+                continue;
+            }
+
+            if (avoidRuin != null && round - avoidRound <= avoidTtl && ruinLoc.equals(avoidRuin)) {
                 continue;
             }
 
@@ -203,5 +325,34 @@ public class Navigation {
 
     public static boolean isOnAllyPaint(RobotController rc) throws GameActionException {
         return rc.senseMapInfo(rc.getLocation()).getPaint().isAlly();
+    }
+
+    public static MapLocation clampInMap(RobotController rc, MapLocation loc) {
+        int x = Math.max(0, Math.min(rc.getMapWidth() - 1, loc.x));
+        int y = Math.max(0, Math.min(rc.getMapHeight() - 1, loc.y));
+        return new MapLocation(x, y);
+    }
+
+    private static int scoreMoveTile(RobotController rc, MapLocation next, MapLocation target, boolean preferAllyPaint)
+            throws GameActionException {
+        MapInfo info = rc.senseMapInfo(next);
+        int distAfter = next.distanceSquaredTo(target);
+        int score = -distAfter;
+
+        PaintType paint = info.getPaint();
+        if (paint.isAlly()) {
+            score += preferAllyPaint ? 6 : 2;
+        } else if (paint == PaintType.EMPTY) {
+            score += 2;
+        } else {
+            score -= preferAllyPaint ? 5 : 2;
+        }
+
+        if (info.hasRuin()) {
+            score -= 2;
+        }
+
+        score += rng.nextInt(4);
+        return score;
     }
 }
