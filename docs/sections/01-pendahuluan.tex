@@ -1,0 +1,171 @@
+Battlecode adalah permainan strategi waktu nyata di mana Anda akan menulis kode untuk pemain otonom. Pemain Anda harus mengelola pasukan robot secara strategis dan mengendalikan cara robot-robot Anda bekerja sama untuk mengalahkan tim lawan. Sebagai peserta, Anda akan belajar menggunakan kecerdasan buatan, penelusuran jalur, algoritma terdistribusi, dan komunikasi untuk membuat pemain Anda sesaing mungkin. Namun, Anda hanya memiliki sumber daya komputasi terbatas per giliran, jadi Anda harus merencanakan strategi, mengoptimalkan, dan berkompromi sesuai kebutuhan.
+Pada Tugas Besar pertama  Strategi Algoritma ini, mahasiswa diminta untuk membuat sebuah bot yang nantinya akan dipertandingkan satu sama lain. Tentunya mahasiswa harus menggunakan strategi greedy dalam membuat bot ini.
+
+\section{Komponen Permainan}
+\subsection{Objektif Permainan}
+Objective utama adalah mewarnai peta. Tim pertama yang berhasil mewarnai lebih dari 70\% petak yang dapat diwarnai di peta akan memenangkan permainan. Tim juga bisa menang dengan cara menghancurkan semua robot dan menara milik tim lawan.
+
+\subsection{Aturan Tiebraker}
+Jika setelah 2000 ronde tidak ada tim yang berhasil mewarnai lebih dari 70\% petak yang dapat diwarnai, permainan akan langsung berakhir. Penentuan pemenang dilakukan dengan urutan tiebreaker berikut:
+\begin{enumerate}
+    \item Luas area yang sudah diwarnai di peta
+    \item Jumlah menara sekutu yang masih hidup
+    \item Total jumlah uang (chips)
+    \item Jumlah total cat (paint) yang dimiliki semua robot dan menara
+    \item Jumlah robot sekutu yang masih hidup
+    \item Jika masih seri, tim dipilih secara acak (uniform random)
+\end{enumerate}
+
+\subsection{Peta}
+Setiap permainan dimainkan di sebuah peta berbentuk grid persegi panjang 2 dimensi, dengan ukuran antara $20 \times 20$ hingga $60 \times 60$ petak (inklusif). Titik kiri bawah peta memiliki koordinat $(0, 0)$ ; koordinat bertambah ke arah Timur (kanan) dan Utara (atas). Lokasi di peta direpresentasikan dengan objek \texttt{MapLocation} yang menyimpan nilai $x$ dan $y$. Agar tidak ada peta yang menguntungkan salah satu pemain, dijamin bahwa peta bersifat simetris (baik melalui rotasi maupun refleksi).
+
+\subsection{Jarak Pandang dan Pergerakan}
+Robot selalu bisa melihat fitur peta dan robot lain dalam jarak hingga \texttt{sqrt(20)}, kira kira 4.47 petak. Unit tidak bisa bergerak melewati menara atau robot lain. Peta mungkin memiliki tembok (walls), yang tidak bisa dilewati atau diwarnai. Tembok maksimal hanya 20\% dari seluruh peta. Tembok tidak bisa dihapus atau dibangun oleh pemain. Robot juga tidak bisa melewati atau mewarnai reruntuhan (ruins).
+
+\subsection{Tower dan Ruins}
+Menara juga berfungsi sebagai zona spawn tim dan bisa menyerang unit musuh. Untuk membangun menara, tim harus mewarnai pola khusus di atas reruntuhan (ruins), zona 5×5 yang sudah ditentukan di peta (lihat section towers untuk selengkapnya).
+
+Setiap permainan dimulai dengan sejumlah reruntuhan yang sudah ada. Reruntuhan tidak bisa dipindah atau dihancurkan. Pusat reruntuhan berjarak minimal 5 petak satu sama lain, dan zona $5 \times 5$ di sekitar pusat reruntuhan dijamin bebas tembok. Setiap tim memulai permainan dengan 2 menara: 1 menara cat dan 1 menara uang. Reruntuhan hanya bisa dilihat oleh robot atau menara jika berada dalam radius penglihatan.
+\begin{enumerate}
+    \item Money Tower
+    \item Paint Tower
+    \item Defense Tower
+\end{enumerate}
+Secara default, setiap tim memulai permainan dengan 1 menara penghasil uang dan 1 menara penghasil cat, keduanya sudah di-upgrade ke level 2.
+
+\subsection{Pola Sumber Daya Khusus}
+Mewarnai pola khusus tertentu di peta dapat meningkatkan produksi sumber daya tim. Pola ini disebut \textbf{Special Resource Pattern} (SRP). Setiap pola aktif yang berhasil diwarnai akan membuat semua menara tambang sekutu mendapatkan +3 sumber daya tambahan per giliran.
+
+Robot bisa menandai pola ini menggunakan fungsi \texttt{markResourcePattern()}, lalu menyelesaikannya dengan \texttt{completeResourcePattern()} (biaya 200 chips). Setelah pola selesai dibuat, pola tersebut harus tetap utuh (tidak rusak warnanya) selama 50 ronde agar menjadi aktif. Pola ini sama untuk semua peta dan permainan.
+
+\subsection{Cat}
+Cat adalah sumber daya utama permainan. Digunakan untuk mengklaim wilayah dan menghitung skor. Setiap robot dan menara menyimpan cat secara individu, dengan kapasitas maksimal tergantung tipenya. Robot yang cat-nya sedikit akan mengalami cooldown lebih lama atau bahkan tidak bisa beraksi. Cat bisa diisi ulang dari mopper atau ditarik dari menara penghasil cat.
+Setiap tipe robot memiliki serangan berbeda yang bisa:
+\begin{itemize}
+    \item Menggunakan cat untuk meletakkan warna di petak, atau
+    \item Menghapus cat milik lawan dari petak.
+\end{itemize}
+Robot bisa memilih antara warna utama atau warna sekunder tim untuk mewarnai petak. Kedua warna ini dianggap sama untuk keperluan skor, tapi dibedakan saat mengecek penyelesaian pola cat.
+
+\subsection{Chips}
+Chips digunakan untuk membangun unit \& menara. Chips dihasilkan setiap ronde oleh menara penghasil uang, dan bisa digunakan oleh robot sekutu mana saja setelah dihasilkan. Setiap tim memulai permainan dengan 2500 chips.
+
+\subsection{Robot}
+Semua robot dapat melakukan aksi seperti bergerak, merasakan (sensing), dan berkomunikasi satu sama lain. Dalam setiap pertempuran, robot milikmu akan berhadapan dengan satu tim musuh. Permainan berjalan berbasis giliran (turn-based) dan dibagi menjadi ronde. Pada setiap ronde, setiap robot mendapat giliran untuk menjalankan kode dan melakukan aksi. Kode yang dijalankan robot menghabiskan bytecode (ukuran sumber daya komputasi, dijelaskan lebih lanjut pada section bytecode limit). Setiap robot hanya memiliki jumlah bytecode tertentu per giliran; jika habis, gilirannya langsung berakhir dan akan dilanjutkan pada giliran berikutnya. Jika robot sudah selesai menjalankan aksinya pada giliran tersebut, ia harus memanggil \texttt{Clock.yield()} untuk menunggu giliran berikutnya dimulai.
+
+Semua robot memiliki HP (hitpoints / nyawa). Ketika HP mencapai nol, robot langsung dihapus dari permainan. Setiap robot memiliki ID unik yang diacak dan tidak kurang dari 10.000. Robot hanya dapat berinteraksi dengan lingkungan terdekat melalui sensing, pergerakan, dan kemampuan khusus. Setiap robot menjalankan salinan kode Anda secara independen. Robot tidak bisa berbagi variabel statis (masing-masing punya salinannya sendiri) karena dijalankan di JVM terpisah.
+
+Dua atau lebih robot tidak boleh berada di petak yang sama. Ketika cooldown pergerakan di bawah 10, robot dapat bergerak ke salah satu dari 8 petak tetangga. Semua robot memiliki cadangan cat (paint) dengan kapasitas maksimum tertentu. Semakin rendah cadangan cat, semakin tinggi cooldown pergerakan dan aksi yang dihadapi.
+Aturan penalti cat rendah:
+\begin{itemize}
+    \item Jika cadangan cat hanya X\% penuh ($X < 50$), maka cooldown meningkat ($100 - 2X$)\%.
+    \item Jika cadangan cat habis sama sekali selama giliran, robot tidak bisa bergerak atau melakukan aksi apa pun (kecuali self-destruct) sampai mendapat cat lagi, dan akan kehilangan 20 HP per ronde.
+\end{itemize}
+
+Robot spawn dengan cadangan cat 100\% penuh dan dapat diisi ulang di menara atau oleh mopper. Kehilangan cat saat mengakhiri giliran:
+\begin{itemize}
+    \item Di wilayah netral : kehilangan 1 cat
+    \item Di wilayah musuh : kehilangan 2 cat
+    \item Di wilayah sekutu : tidak kehilangan cat
+\end{itemize}
+
+Penalti cat tambahan setiap ronde adalah 1 $\times$ jumlah robot sekutu yang bersebelahan (dalam 8 petak sekitar). Pinalti ini berlipat ganda ($\times 2$) saat berada di wilayah musuh. Robot dapat di-spawn dalam radius aksi $\sqrt{4}$ ($\approx$ 2 petak) dari menara sekutu, dengan biaya cat dan chips sesuai jenisnya.
+
+\subsection{Jenis Robot}
+\subsubsection{Soldier}
+\begin{itemize}
+    \item HP: 250
+    \item Kapasitas cat maks: 200
+    \item Biaya produksi: 200 cat + 250 chips
+    \item Serangan: Menyerang satu petak (radius aksi 3)
+    \item Jika petak kosong atau sudah ada cat sekutu → mewarnai petak tersebut
+    \item Menimbulkan 50 damage ke menara musuh (tidak ke robot)
+    \item Biaya serangan: 5 cat
+    \item Cooldown aksi: 10
+\end{itemize}
+
+\subsubsection{Splasher}
+\begin{itemize}
+    \item HP: 150
+    \item Kapasitas cat maks: 300
+    \item Biaya produksi: 300 cat + 400 chips
+    \item Serangan: Menyerang area melingkar (radius 2 dari titik pusat)
+          \begin{itemize}
+              \item Titik pusat serangan maksimal 2 petak dari posisi splasher
+              \item Dalam radius $\sqrt{2}$ (~1.41) dari pusat $\rightarrow$ bisa menimpa cat musuh
+              \item Mewarnai semua petak kosong atau sekutu di area
+              \item Menimbulkan 100 damage ke menara musuh (tidak ke robot)
+          \end{itemize}
+    \item Biaya serangan: 50 cat
+    \item Cooldown aksi: 50
+\end{itemize}
+
+\subsubsection{Mopper}
+\begin{itemize}
+    \item HP: 50
+    \item Kapasitas cat maks: 100
+    \item Biaya produksi: 100 cat + 300 chips
+    \item Kemampuan utama:
+          \begin{itemize}
+              \item Mop petak (radius $\sqrt{2}$)
+              \item Transfer cat ke robot atau menara sekutu (radius $\sqrt{2}$)
+              \item Ayunan mop (swing) ke salah satu dari 4 arah utama (atas, bawah, kiri, kanan)
+          \end{itemize}
+\end{itemize}
+Catatan tambahan: Mopper mendapat penalti cat ganda saat bergerak atau mengakhiri giliran di wilayah musuh.
+
+\subsection{Towers}
+\begin{itemize}
+    \item \textbf{Prosedur Pembangunan Menara}. Semua menara dibangun dengan prosedur yang sama. Menara hanya bisa dibangun di atas reruntuhan (ruins), setelah pola cat 5×5 tertentu ditempatkan di sekitar reruntuhan tersebut.
+          \begin{itemize}
+              \item Panggil \texttt{markTowerPattern()} untuk secara otomatis menempatkan penanda di area $5 \times 5$ sekitar reruntuhan. Penanda ini menunjukkan posisi mana yang harus diwarnai dengan warna utama (primary color). Biaya: 25 cat
+              \item Setelah pola sudah diwarnai, robot bisa memanggil \texttt{completeTowerPattern()} untuk memunculkan menara yang ditentukan di lokasi reruntuhan.
+                    \begin{itemize}
+                        \item Menara akan tetap hidup sampai HP-nya mencapai 0, meskipun pola cat di sekitar reruntuhan kemudian dihapus.
+                        \item Catatan: Pola menara bisa diselesaikan tanpa memanggil \texttt{markTowerPattern()} terlebih dahulu, asalkan pola cat utama dan sekunder sudah cocok.
+                    \end{itemize}
+          \end{itemize}
+    \item \textbf{Posisi dan Ukuran Menara}. Menara yang dihasilkan akan menempati blok $1 \times 1$ di tengah bentuk spawn. Bentuk berbeda menghasilkan jenis menara berbeda dengan rentang serangan, laju serang, laju penambangan, dan kesehatan yang berbeda.
+          \begin{itemize}
+              \item Level dan Upgrade. Menara selalu dibangun di level 1. Bisa di-upgrade ke level lebih tinggi menggunakan \texttt{upgradeTower()} dalam radius $sqrt(2)$ (~1.41 petak).
+              \item Batasan. Tidak ada tim yang boleh memiliki lebih dari 25 menara sekaligus dan setiap menara bisa menyimpan 1000 cat.
+              \item Bonus dari Menara Pertahanan. Setiap menara pertahanan yang hidup meningkatkan kekuatan serangan satu blok (single-block attack) dari semua menara sekutu sebesar: +5 (level 1), +7 (level 2), dan +9 (level 3). Bonus ini tidak memengaruhi serangan area (AoE) menara sekutu.
+          \end{itemize}
+\end{itemize}
+
+\subsection{Serangan}
+Bonus ini tidak memengaruhi serangan area (AoE) menara sekutu.
+\begin{enumerate}
+    \item Serangan satu petak (single-block attack) yang menyerang satu unit musuh di satu petak.
+    \item Serangan satu petak (single-block attack) yang menyerang satu unit musuh di satu petak.
+\end{enumerate}
+Setiap giliran, satu menara dapat melakukan satu serangan satu petak dan satu serangan area efek.
+
+\subsection{Penambangan}
+Setiap giliran, menara penghasil uang dan menara penghasil cat akan secara pasif menambang sumber daya.
+\begin{itemize}
+    \item Cat disimpan di dalam menara dan dapat diambil oleh robot sekutu.
+    \item Uang (chips) tersedia untuk semua unit sekutu.
+\end{itemize}
+Setiap menara memulai dengan 500 cat untuk digunakan spawn berbagai jenis unit. Menara dapat memunculkan robot dalam jarak 2 petak dari posisinya. Jika cat di menara habis, menara tidak akan bisa spawn unit lagi sampai diisi ulang atau menghasilkan cat sendiri. Cat dapat diisi ulang menggunakan cat yang dikumpulkan oleh mopper.
+
+\subsection{Komunikasi}
+Robot hanya bisa melihat lingkungan di sekitarnya secara langsung dan dikendalikan secara independen oleh salinan kode yang sama, sehingga koordinasi antar-robot sangat sulit. Anda tidak dapat berbagi variabel apa pun di antara mereka; bahkan variabel static pun tidak akan dibagikan karena setiap robot memiliki salinannya sendiri.
+Komunikasi dilakukan dengan dua cara:
+\begin{itemize}
+    \item Pesan (Messages) Pesan dapat berisi informasi apa saja, tetapi dibatasi hanya 4 byte.
+    \item Penanda (Markers) Penanda menyatakan warna apa yang seharusnya digunakan untuk mewarnai ulang suatu petak, dan penanda ini terlihat oleh semua robot sekutu. Penanda tidak memberikan efek lain apa pun dalam permainan.
+\end{itemize}
+
+\subsection{Action dan Cooldown}
+Robot melakukan berbagai aksi untuk berinteraksi dengan dunia permainan. Beberapa aksi tidak bisa dilakukan berkali-kali dalam satu giliran atau dalam waktu singkat karena terikat cooldown. Berikut daftar aksi utama:
+\begin{itemize}
+    \item \textbf{Menyerang/mewarnai}. Menyerang dan mewarnai dilakukan dengan fungsi yang sama. Aksi ini hanya bisa dilakukan jika action cooldown robot < 10. Action cooldown robot dapat dicek dengan fungsi isActionReady(). Dilakukan dengan memanggil metode attack() yang akan menaargetkan satu petak yang dapat dilihat oleh robot tersebut. Efeknya tergantung tipe robot (seperti yang dijelaskan di bagian Robot): memberikan damage atau mewarnai petak. Setelah dilakukan, action cooldown robot bertambah sesuai nilai yang ditentukan oleh tipe robot.
+    \item \textbf{Bergerak (Moving)}. Hanya bisa dilakukan jika movement $cooldown < 10$. Movement cooldown dapat dicek dengan \texttt{isMovementReady()}. Petak tujuan harus kosong (tidak ditempati unit lain) dan bisa dilewati (passable). Dilakukan dengan memanggil \texttt{move()} dengan arah yang diinginkan. Setelah bergerak, movement cooldown bertambah 10. Untuk memeriksa apakah gerakan valid, gunakan \texttt{canMove()}.
+    \item \textbf{Menandai (marking)}. Semua robot bisa menandai petak tempat robot sedang berdiri, atau Menghapus penanda sekutu dari petak tempat robot berdiri. Biaya dari aksi ini adalah 1 cat. Aksi ini tidak menambah action cooldown sama sekali. Aksi dapat dilakukan dengan \texttt{mark()} atau \texttt{removeMark()}. Penanda tidak memengaruhi kepemilikan wilayah (tidak membuat petak menjadi wilayah sekutu). Penanda hanya bisa dirasakan oleh robot sekutu melalui \texttt{senseNearbyMapInfos()}. Penanda secara  umum tersebut hanya boleh ditempatkan pada petak yang dapat diwarnai (tidak ada tembok atau reruntuhan). Selain itu, terdapat Fungsi khusus penanda, yakni \texttt{markTowerPattern()} dan \texttt{markResourcePattern()} menggunakan 25 cat dan menandai area $5 \times 5$ dengan pola yang sesuai.
+    \item \textbf{Mentransfer Cat (Transferring)}. Hanya dapat dilakukan oleh robot mopper, dan hanya dapat dilakukan jika action cooldown < 10 (dapat dicek dengan \texttt{isActionReady()}). Aksi ini dapat dilakukan dengan memanggil prosedur \texttt{transferPaint()}. Jarak maksimal: $\sqrt{2}$ (~1.41 petak). Mentransfer jumlah cat tertentu ke target (robot atau menara sekutu). Jika jumlah yang diberikan negatif, maka mopper justru mengambil cat dari target. Setelah dilakukan, action cooldown bertambah sesuai nilai yang disebutkan di deskripsi mopper.
+    \item \textbf{Menarik cat dari menara (withdrawing)}. Semua robot bisa menarik cat dari menara sekutu untuk mengisi ulang cadangan cat mereka. Memerlukan action $cooldown < 10$. Setelah dilakukan, action cooldown bertambah 10. Jarak maksimal: $\sqrt{2}$ (~1.41 petak). Dilakukan dengan \texttt{transferPaint()} menggunakan nilai negatif untuk menunjukkan jumlah yang ingin ditarik.
+    \item \textbf{Spawn Robot (spawning)}. Hanya bisa dilakukan jika action cooldown menara < 10 (dicek dengan \texttt{isActionReady()}). Dilakukan dengan \texttt{buildRobot()}. Mengurangi biaya robot (cat + chips) dari stok menara. Memunculkan satu robot tipe tertentu di petak yang ditentukan. Setelah dilakukan, action cooldown menara bertambah 10.
+    \item \textbf{Berkomunikasi (communitating)}. Robot menggunakan \texttt{sendMessage()} untuk mengirim pesan ke menara sekutu dalam jangkauan. Menara menggunakan \texttt{sendMessage()} untuk mengirim pesan ke robot sekutu dalam jangkauan. Robot menggunakan \texttt{readMessages()} untuk membaca pesan baru yang diterima dalam 5 ronde terakhir dari buffer. Kedua metode ini tidak menambah action cooldown. Syarat komunikasi: kedua unit harus berada di petak yang terhubung melalui jalur cat sekutu.
+    \item \textbf{Menghancurkan Diri Sendiri (Disintegrating)}. Robot apa pun bisa memanggil \texttt{disintegrate()}. Menghancurkan robot tersebut secara instan. Tidak ada cooldown khusus untuk aksi ini.
+\end{itemize}

@@ -215,3 +215,4 @@ docs/**/*.out
 docs/**/*.run.xml
 docs/**/*.synctex.gz
 docs/**/*.toc
+specs-desc.md

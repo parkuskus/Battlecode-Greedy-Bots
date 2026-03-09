@@ -1,0 +1,155 @@
+\documentclass[12pt,a4paper]{report}
+
+% ---------- Paket dasar ----------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[indonesian]{babel}
+\usepackage{lipsum}
+
+% ---------- Paket matematika & gambar ----------
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+\bibliographystyle{IEEEtran}
+% ---------- Paket lain ----------
+\usepackage[most]{tcolorbox}
+\usepackage{forest}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+
+\usepackage{titlesec}
+
+\usepackage{titlesec}
+\usepackage{longtable}
+\usepackage{array} % untuk menentukan lebar kolom
+\usepackage{booktabs} % gaya tabel lebih elegan
+\usepackage[table]{xcolor}
+
+
+
+% Tambah jarak aman dari header dan footer:	
+\setlength{\headheight}{10pt}   % wajib cukup besar untuk fancyhdr
+\setlength{\headsep}{55pt}      % jarak header ke teks
+\setlength{\footskip}{28pt}     % jarak teks ke footer
+\usepackage[a4paper,top=3cm,bottom=3cm,left=3cm,right=3cm]{geometry}
+
+% Semua gambar dari folder public dan subfoldernya
+\graphicspath{{public/}{public/01-pendahuluan/}{public/02-dasar-teori/}{public/03-implementasi/}}
+
+% --- Pengaturan header & footer ---
+\pagestyle{fancy}
+\fancyhf{} % clear all
+
+% --- Paksa semua halaman (termasuk awal chapter) memakai fancy ---
+\fancypagestyle{plain}{%
+	\fancyhf{}%
+	\fancyhead[L]{%
+		\includegraphics[height=1.1cm]{logo-itb}\hspace{0.3cm}%
+		\includegraphics[height=1.1cm]{logo-stei}\hspace{0.3cm}%
+	}%
+	\fancyhead[R]{%
+		\begin{minipage}{9cm}
+			\raggedleft\bfseries IF2211 Strategi Algoritma\\
+			\normalsize Laporan Akhir Tugas Besar 1\\
+			Semester 2 2025/2026
+		\end{minipage}
+	}%
+	\renewcommand{\headrulewidth}{0.4pt}%
+	\fancyfoot[L]{\small v1.0}%
+	\fancyfoot[C]{\small Halaman \thepage}%
+	\fancyfoot[R]{\small }%
+	\renewcommand{\footrulewidth}{0.4pt}%
+}
+
+
+\fancyhead[L]{%
+	\includegraphics[height=1.5cm]{logo-itb}\hspace{0.3cm}%
+	\includegraphics[height=1.5cm]{logo-stei}\hspace{0.3cm}%
+}
+
+\fancyhead[R]{%
+	\begin{minipage}{9cm}
+		\raggedleft\bfseries IF2211 Strategi Algoritma\\
+		\normalsize Laporan Akhir Tugas Besar 1\\
+		\normalsize Semester II 2025/2026
+	\end{minipage}
+}
+
+\renewcommand{\headrulewidth}{0.4pt}
+
+\fancyfoot[L]{\small v1.0}
+\fancyfoot[C]{\small Halaman \thepage}
+\fancyfoot[R]{\small }
+\renewcommand{\footrulewidth}{0.4pt}
+
+\begin{document}
+
+\begin{titlepage}
+	\thispagestyle{empty}
+	\centering
+
+	% ---------- Judul utama ----------
+	{\LARGE \textbf{Tugas Besar 1}\par}
+	\vspace{0.2cm}
+	{\LARGE \textbf{Jambi X Bekasi}\par}
+	\vspace{0.8cm}
+	{\large IF2211 Strategi Algoritma\par}
+	\vspace{0.2cm}
+	{\large \textit{Battlecode Conqueror} : Pembuatan Bot 'Penakluk' Permainan \textit{Battlecode} Berbasis Algoritma Greedy \par}
+	\vspace{0.2cm}
+	{\large Semester 2 Tahun 2025/2026\par}
+
+	% ---------- Gambar tengah ----------
+	\vspace{1.8cm}
+	\includegraphics[width=0.9\textwidth]{foto-kelompok-new.png}\par
+
+	% ---------- Disusun oleh ----------
+	\vspace{1.2cm}
+	{\bfseries Disusun oleh:\par}
+	\vspace{0.2cm}
+	\textbf{Jambi X Bekasi}
+	\vspace{0.5cm} \\
+	\begin{tabular}{l l}
+		Kevin Wirya Valerian        & (13524019) \\
+		Muhammad Aufar Rizqi Kusuma & (13524061) \\
+		Athilla Zaidan Zidna Fann   & (13524068) \\
+	\end{tabular}
+
+	% ---------- Institusi ----------
+	\vspace{2.0cm}
+	Laboratorium Ilmu dan Rekayasa Komputasi\par
+	Program Studi Teknik Informatika\par
+	Sekolah Teknik Elektro dan Informatika\par
+	Institut Teknologi Bandung\par
+
+\end{titlepage}
+
+\clearpage
+\pagestyle{fancy}
+
+\tableofcontents
+\clearpage
+
+\chapter{Deskripsi Tugas}
+\input{sections/01-pendahuluan}
+
+\chapter{Landasan Teori}
+\input{sections/02-dasar-teori}
+
+\chapter{Aplikasi Strategi Greedy}
+\input{sections/03-implementasi}
+
+\chapter{Implementasi dan Pengujian}
+\input{sections/04-eksperimen}
+
+\chapter{Kesimpulan dan Saran}
+\input{sections/05-penutup}
+
+\chapter{Lampiran}
+\input{sections/06-lampiran}
+
+\bibliography{dafpus}
+
+\end{document}
