@@ -219,6 +219,7 @@ docs/**/*.out
 docs/**/*.run.xml
 docs/**/*.synctex.gz
 <<<<<<< HEAD
+<<<<<<< HEAD
 docs/**/*.toc
 =======
 *.exe
@@ -226,3 +227,7 @@ docs/**/*.toc
 =======
 docs/**/*.toc
 >>>>>>> f74a622 (feat: add LaTeX build artifacts to .gitignore for cleaner documentation builds)
+=======
+docs/**/*.toc
+specs-desc.md
+>>>>>>> c149ff9 (update: gitignore)
