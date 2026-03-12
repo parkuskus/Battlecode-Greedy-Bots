@@ -1,4 +1,38 @@
 \section{Algoritma Greedy}
+
+\subsection{Definisi}
+
+Algoritma \textit{greedy} adalah paradigma perancangan algoritma yang membangun solusi secara bertahap dengan selalu mengambil pilihan yang tampak paling menguntungkan pada setiap langkah, tanpa mempertimbangkan konsekuensi jangka panjang (\textit{locally optimal choice}). Nama "greedy" (rakus) mencerminkan sifatnya yang langsung mengambil keuntungan terbesar yang tersedia saat itu, tanpa mundur (\textit{backtrack}) untuk mempertimbangkan ulang pilihan sebelumnya \cite{cormen2009introduction}.
+
+Secara formal, algoritma greedy bekerja pada masalah optimasi dengan struktur sebagai berikut: diberikan himpunan kandidat $C$, fungsi seleksi memilih kandidat terbaik dari $C$, fungsi kelayakan memeriksa apakah kandidat dapat dimasukkan ke solusi, dan fungsi objektif mengukur kualitas solusi. Algoritma terus memilih kandidat terbaik yang layak hingga solusi lengkap terbentuk.
+
+\subsection{Syarat Penerapan}
+
+Agar algoritma greedy menghasilkan solusi optimal, permasalahan harus memiliki dua sifat utama \cite{cormen2009introduction}:
+
+\begin{enumerate}
+  \item \textbf{Greedy Choice Property}. Solusi optimal global dapat dicapai dengan membuat pilihan optimal lokal pada setiap langkah. Artinya, pilihan greedy tidak perlu direvisi di kemudian hari. Sifat ini membedakan greedy dari \textit{dynamic programming} yang harus memeriksa semua subproblem.
+
+  \item \textbf{Optimal Substructure}. Solusi optimal dari masalah mengandung solusi optimal dari submasalahnya. Setelah pilihan greedy dibuat, sisa masalah yang harus diselesaikan memiliki struktur yang sama dengan masalah awal.
+\end{enumerate}
+
+Jika kedua sifat ini terpenuhi, greedy menjamin solusi optimal. Namun pada banyak masalah praktis (termasuk dalam permainan Battlecode), greedy tidak selalu optimal secara global, tetapi tetap memberikan solusi yang baik dengan kompleksitas waktu yang jauh lebih rendah dibandingkan pendekatan eksak seperti \textit{dynamic programming} atau pencarian exhaustif.
+
+\subsection{Hubungan dengan Permasalahan Battlecode}
+
+Permainan Battlecode menghadirkan beberapa karakteristik yang menjadikan algoritma greedy sebagai pendekatan yang tepat:
+
+\begin{enumerate}
+  \item \textbf{Batasan bytecode per giliran.} Setiap robot memiliki kuota komputasi terbatas per ronde. Algoritma yang memerlukan \textit{lookahead} mendalam atau eksplorasi seluruh ruang keadaan — seperti minimax atau MCTS — tidak dapat dijalankan dalam batas ini. Greedy yang hanya mengevaluasi kondisi lokal saat ini jauh lebih hemat bytecode.
+
+  \item \textbf{Keputusan independen per robot.} Setiap robot berjalan di JVM terpisah tanpa memori bersama. Koordinasi global yang dibutuhkan oleh algoritma seperti \textit{dynamic programming} terdistribusi tidak memungkinkan. Greedy memungkinkan setiap robot membuat keputusan mandiri berdasarkan informasi lokal yang tersedia.
+
+  \item \textbf{Lingkungan yang tidak sepenuhnya dapat diamati.} Robot hanya dapat melihat dalam radius $\sqrt{20}$ petak. Optimasi global memerlukan informasi lengkap tentang seluruh peta, yang tidak tersedia. Greedy yang hanya bergantung pada informasi yang bisa disense secara langsung lebih cocok untuk lingkungan seperti ini.
+
+  \item \textbf{Dinamika permainan real-time.} Kondisi peta berubah setiap ronde — tile dicat, robot musuh bergerak, menara dibangun. Greedy yang mengevaluasi ulang kondisi setiap turn secara alami adaptif terhadap perubahan ini, tanpa perlu menyimpan dan memperbarui model dunia yang kompleks.
+\end{enumerate}
+
+Dalam konteks Battlecode, prinsip greedy diterapkan pada setiap robot sebagai berikut: pada setiap ronde, robot mengevaluasi kondisi lokal saat ini (jumlah cat, tile sekitar, robot musuh, dll.) dan memilih aksi dengan \textit{marginal gain} tertinggi — yaitu aksi yang paling banyak menambah coverage, atau paling mendesak untuk kelangsungan hidup. Pendekatan ini memastikan bahwa setiap ronde tidak ada sumber daya yang terbuang, yang secara kumulatif menghasilkan coverage yang tinggi menjelang batas ronde 2000.
 \section{Finite State Machine}
 
 \section{Multi-Agent System}
