@@ -1,6 +1,13 @@
-package bot_2;
+package bot_kevin_1;
 
-import battlecode.common.*;
+import battlecode.common.Direction;
+import battlecode.common.GameActionException;
+import battlecode.common.GameConstants;
+import battlecode.common.MapInfo;
+import battlecode.common.MapLocation;
+import battlecode.common.RobotController;
+import battlecode.common.RobotInfo;
+import battlecode.common.UnitType;
 
 /*
     Decision priority tiap round
