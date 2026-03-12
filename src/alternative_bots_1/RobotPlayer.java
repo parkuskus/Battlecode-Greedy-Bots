@@ -1,9 +1,7 @@
-package bot_2;
-
+package alternative_bots_1;
 import battlecode.common.*;
 
 public class RobotPlayer {
-
     static RobotController rc;
     static Team myTeam;
     static Team enemyTeam;

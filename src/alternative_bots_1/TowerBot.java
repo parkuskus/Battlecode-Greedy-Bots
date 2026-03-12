@@ -1,9 +1,7 @@
-package bot_2;
-
+package alternative_bots_1;
 import battlecode.common.*;
 
 public class TowerBot {
-
     private static int spawnCount = 0;
     private static MapLocation[] spawnLocs;
     private static MapLocation diagEnemy;
