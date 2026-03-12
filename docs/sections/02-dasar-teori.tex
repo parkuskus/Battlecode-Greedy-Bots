@@ -6,6 +6,40 @@ Algoritma \textit{greedy} adalah paradigma perancangan algoritma yang membangun 
 
 Secara formal, algoritma greedy bekerja pada masalah optimasi dengan struktur sebagai berikut: diberikan himpunan kandidat $C$, fungsi seleksi memilih kandidat terbaik dari $C$, fungsi kelayakan memeriksa apakah kandidat dapat dimasukkan ke solusi, dan fungsi objektif mengukur kualitas solusi. Algoritma terus memilih kandidat terbaik yang layak hingga solusi lengkap terbentuk.
 
+Lebih lanjut, menurut \cite{pptstima}, pada algoritma Greedy, terdapat beberapa elemen yang membangun algoritma tersebut. Diataranya adalah sebagai berikut.
+\begin{enumerate}
+  \item Himpunan Kandidat, \textit{C}, dimana \textit{C} berisi kandidat yang akan dipilih pada setiap langkah.
+  \item Himpunan solusi, \textit{S}, yang berisi kandidat solusi yang sudah dipilih.
+  \item Fungsi solusi, yang menentukan apakah himpunan kandidat yang dipilih sudah memberikan solusi atau belum.
+  \item Fungsi seleksi (\textit{selection function}), yang memilih kandidat berdasarkan strategi greedy tertentu. Strategi greedy ini bersifat heuristik.
+  \item Fungsi kelayakan (\textit{feasible}), yang  memeriksa apakah kandidat yang dipilih dapat dimasukkan ke dalam himpunan solusi (layak atau tidak).
+  \item Fungsi obyektif, yang memaksimumkan atau meminimumkan sebuah entitas/objektif.
+\end{enumerate}
+Dengan demikian, dapat dikatakan bahwa Algoritma Greedy adalah algoritma yang melibatkan pencarian sebuah himpunan bagian, \textit{S}, dari himpunan kandidat, \textit{C}; yang dalam hal ini, \textit{S} harus memenuhi beberapa kriteria yang ditentukan,
+yaitu \textit{S} menyatakan suatu solusi dan \textit{S} dioptimisasi oleh fungsi obyektif.
+Skema umum algoritma greedy ditunjukkan pada Algoritma~\ref{alg:greedy}.
+
+\begin{algorithm}[H]
+  \caption{Algoritma Greedy Umum}
+  \label{alg:greedy}
+  \begin{algorithmic}[1]
+    \Function{Greedy}{$C$ : himpunan\_kandidat}
+    \State $S \gets \emptyset$ \Comment{Inisialisasi $S$ dengan kosong}
+    \While{$\neg\,\textsc{Solusi}(S)$ \textbf{and} $C \neq \emptyset$}
+    \State $x \gets \textsc{Seleksi}(C)$ \Comment{Pilih sebuah kandidat dari $C$}
+    \State $C \gets C \setminus \{x\}$ \Comment{Buang $x$ dari $C$ karena sudah dipilih}
+    \If{$\textsc{Layak}(S \cup \{x\})$} \Comment{$x$ memenuhi kelayakan untuk dimasukkan ke dalam $S$}
+    \State $S \gets S \cup \{x\}$
+    \EndIf
+    \EndWhile
+    \If{$\textsc{Solusi}(S)$} \Comment{Solusi sudah lengkap}
+    \State \Return $S$
+    \Else
+    \State \textbf{write}(\textit{`tidak ada solusi'})
+    \EndIf
+    \EndFunction
+  \end{algorithmic}
+\end{algorithm}
 \subsection{Syarat Penerapan}
 
 Agar algoritma greedy menghasilkan solusi optimal, permasalahan harus memiliki dua sifat utama \cite{cormen2009introduction}:
@@ -20,21 +54,128 @@ Jika kedua sifat ini terpenuhi, greedy menjamin solusi optimal. Namun pada banya
 
 \subsection{Hubungan dengan Permasalahan Battlecode}
 
-Permainan Battlecode menghadirkan beberapa karakteristik yang menjadikan algoritma greedy sebagai pendekatan yang tepat:
+Permainan Battlecode menghadirkan beberapa karakteristik yang menjadikan algoritma greedy sebagai pendekatan yang tepat. Karakteristik yang dimaksud adalah sebagai berikut.
 
 \begin{enumerate}
-  \item \textbf{Batasan bytecode per giliran.} Setiap robot memiliki kuota komputasi terbatas per ronde. Algoritma yang memerlukan \textit{lookahead} mendalam atau eksplorasi seluruh ruang keadaan — seperti minimax atau MCTS — tidak dapat dijalankan dalam batas ini. Greedy yang hanya mengevaluasi kondisi lokal saat ini jauh lebih hemat bytecode.
+  \item \textbf{Batasan bytecode per giliran.} Setiap robot memiliki kuota komputasi terbatas per ronde. Algoritma yang memerlukan \textit{lookahead} mendalam atau eksplorasi seluruh ruang keadaan, seperti minimax atau MCTS, tidak dapat dijalankan dalam batas ini. Greedy yang hanya mengevaluasi kondisi lokal saat ini jauh lebih hemat bytecode.
 
   \item \textbf{Keputusan independen per robot.} Setiap robot berjalan di JVM terpisah tanpa memori bersama. Koordinasi global yang dibutuhkan oleh algoritma seperti \textit{dynamic programming} terdistribusi tidak memungkinkan. Greedy memungkinkan setiap robot membuat keputusan mandiri berdasarkan informasi lokal yang tersedia.
 
   \item \textbf{Lingkungan yang tidak sepenuhnya dapat diamati.} Robot hanya dapat melihat dalam radius $\sqrt{20}$ petak. Optimasi global memerlukan informasi lengkap tentang seluruh peta, yang tidak tersedia. Greedy yang hanya bergantung pada informasi yang bisa disense secara langsung lebih cocok untuk lingkungan seperti ini.
 
-  \item \textbf{Dinamika permainan real-time.} Kondisi peta berubah setiap ronde — tile dicat, robot musuh bergerak, menara dibangun. Greedy yang mengevaluasi ulang kondisi setiap turn secara alami adaptif terhadap perubahan ini, tanpa perlu menyimpan dan memperbarui model dunia yang kompleks.
+  \item \textbf{Dinamika permainan real-time.} Kondisi peta berubah setiap ronde, seperti tile yang dicat, robot musuh bergerak, dan menara dibangun. Greedy yang mengevaluasi ulang kondisi setiap turn secara alami adaptif terhadap perubahan ini, tanpa perlu menyimpan dan memperbarui model global yang kompleks.
 \end{enumerate}
 
-Dalam konteks Battlecode, prinsip greedy diterapkan pada setiap robot sebagai berikut: pada setiap ronde, robot mengevaluasi kondisi lokal saat ini (jumlah cat, tile sekitar, robot musuh, dll.) dan memilih aksi dengan \textit{marginal gain} tertinggi — yaitu aksi yang paling banyak menambah coverage, atau paling mendesak untuk kelangsungan hidup. Pendekatan ini memastikan bahwa setiap ronde tidak ada sumber daya yang terbuang, yang secara kumulatif menghasilkan coverage yang tinggi menjelang batas ronde 2000.
-\section{Finite State Machine}
+Dalam konteks Battlecode, prinsip greedy diterapkan pada setiap robot sebagai berikut. Pada setiap ronde, robot mengevaluasi kondisi lokal saat ini (jumlah cat, tile sekitar, robot musuh, dll.) dan memilih aksi dengan \textit{marginal gain} tertinggi, yaitu aksi yang paling banyak menambah coverage atau yang paling mendesak untuk kelangsungan hidup. Pendekatan ini memastikan bahwa setiap ronde tidak ada sumber daya yang terbuang dan secara kumulatif menghasilkan coverage yang tinggi menjelang batas ronde 2000.
 
 \section{Multi-Agent System}
+\subsection{Definisi dan Karakteristik Agen}
 
-\section{Maximum Coverage Promblem}
+\textit{Multi-Agent System} (MAS) adalah sistem yang terdiri dari sekumpulan entitas komputasi otonom yang disebut \textit{agen}, yang berinteraksi satu sama lain dalam suatu lingkungan bersama untuk mencapai tujuan individual maupun kolektif \cite{wooldridge2009introduction}. Setiap agen memiliki kemampuan untuk mempersepsi lingkungannya, mengambil keputusan, dan mengeksekusi aksi secara mandiri.
+
+Menurut Wooldridge dan Jennings \cite{wooldridge2009introduction}, suatu program dapat dikatakan sebagai agen jika memenuhi empat sifat utama berikut.
+
+\begin{enumerate}
+  \item \textbf{Otonomi (\textit{Autonomy}).} Agen beroperasi tanpa intervensi langsung dari manusia atau entitas lain, dan memiliki kendali penuh atas aksi serta keadaan internalnya sendiri.
+
+  \item \textbf{Reaktivitas (\textit{Reactivity}).} Agen mampu mempersepsi lingkungannya dan merespons perubahan yang terjadi secara tepat waktu.
+
+  \item \textbf{Proaktivitas (\textit{Pro-activeness}).} Agen tidak sekadar bereaksi terhadap lingkungan, tetapi juga mengambil inisiatif untuk mencapai tujuannya secara aktif (\textit{goal-directed behavior}).
+
+  \item \textbf{Kemampuan Sosial (\textit{Social Ability}).} Agen mampu berinteraksi dengan agen lain melalui suatu bahasa atau protokol komunikasi untuk berkoordinasi, bernegosiasi, atau berbagi informasi.
+\end{enumerate}
+
+Dalam permainan Battlecode, setiap robot memenuhi keempat sifat di atas: robot beroperasi secara otonom pada JVM-nya masing-masing, bereaksi terhadap kemunculan musuh atau perubahan tile, secara proaktif mengejar target coverage, dan berkomunikasi dengan robot lain melalui mekanisme \textit{shared array}.
+
+\subsection{Arsitektur: Terpusat vs. Terdesentralisasi}
+
+MAS dapat dirancang dengan dua pendekatan arsitektur utama yang berbeda secara fundamental dalam distribusi pengambilan keputusan.
+
+\textbf{Arsitektur terpusat (\textit{centralized})} menempatkan satu kontroler pusat yang mengumpulkan seluruh informasi dari semua agen, menghitung keputusan optimal secara global, lalu mendistribusikan instruksi ke setiap agen. Pendekatan ini memungkinkan koordinasi yang sangat presisi dan teroptimasi, namun rentan terhadap \textit{single point of failure} dan tidak skalabel untuk jumlah agen yang besar.
+
+\textbf{Arsitektur terdesentralisasi (\textit{decentralized})} mendistribusikan pengambilan keputusan ke masing-masing agen. Setiap agen hanya bergantung pada informasi lokal yang ia persepsi dan informasi terbatas yang diterima dari agen lain. Pendekatan ini lebih robust, skalabel, dan toleran terhadap kegagalan individual, namun koordinasi global lebih sulit dicapai.
+
+Battlecode secara inheren memaksa arsitektur terdesentralisasi. Setiap robot berjalan pada JVM yang terpisah tanpa memori bersama, sehingga tidak mungkin ada kontroler pusat yang mengorkestrasi semua robot secara langsung. Satu-satunya jalur koordinasi yang tersedia adalah melalui \textit{shared array} berukuran terbatas, yang harus diakses secara bergantian. Karena itu, setiap robot harus mampu membuat keputusan yang baik secara mandiri berdasarkan informasi lokal, dengan koordinasi yang sesedikit mungkin namun tetap efektif.
+
+\subsection{Mekanisme Komunikasi Antar Agen}
+
+Dalam MAS, koordinasi antar agen sangat bergantung pada mekanisme komunikasi yang digunakan. Terdapat dua bentuk komunikasi yang relevan dalam konteks Battlecode.
+
+\textbf{Komunikasi eksplisit} dilakukan melalui pengiriman pesan langsung. Dalam Battlecode, mekanisme ini diimplementasikan via \textit{shared array} yang dapat di-\textit{read}/\textit{write} oleh semua robot dalam tim. Bot yang dikembangkan menggunakan format pesan 32-bit yang di-\textit{pack} secara bit sebagai berikut: 3 bit kode pesan, 6 bit koordinat-$x$, 6 bit koordinat-$y$, dan 2 bit \textit{payload} tambahan. Menara berperan sebagai \textit{relay hub} yang meneruskan pesan dari robot ke robot, karena hanya menara yang memiliki \textit{action radius} untuk menulis ke \textit{shared array} tanpa batasan jarak.
+
+\textbf{Komunikasi implisit} terjadi ketika agen berkomunikasi secara tidak langsung melalui modifikasi lingkungan bersama. Dalam Battlecode, tile yang telah dicat dengan warna tim sendiri menjadi sinyal bagi robot lain bahwa area tersebut telah dikerjakan sehingga prioritasnya lebih rendah. Sebaliknya, tile berwarna musuh menjadi sinyal prioritas tinggi untuk direbut. Robot membaca sinyal ini cukup dengan melakukan \textit{sense} pada tile di sekitarnya, tanpa perlu ada komunikasi pesan eksplisit sama sekali.
+
+\subsection{Pembagian Peran (\textit{Role-Based Division})}
+
+Salah satu strategi kunci dalam MAS adalah pembagian peran, di mana setiap agen memiliki spesialisasi yang berbeda untuk menangani aspek berbeda dari permasalahan secara paralel. Spesialisasi ini meningkatkan efisiensi keseluruhan sistem karena setiap agen dapat dioptimasi untuk tugasnya masing-masing.
+
+Dalam bot yang dikembangkan, terdapat empat peran yang berbeda sebagai berikut.
+
+\begin{enumerate}
+  \item \textbf{Soldier.} Agen ini bertugas mengecat tile kosong satu per satu. Memiliki \textit{state machine} dengan lima keadaan: \textsc{Refill} (mengisi ulang cat ke menara), \textsc{Combat} (menyerang musuh), \textsc{Build} (membangun menara di reruntuhan), \textsc{SRP} (melengkapi pola menara), dan \textsc{Cover} (misi utama coverage).
+
+  \item \textbf{Splasher.} Agen area-of-effect yang dapat mengecat beberapa tile sekaligus dalam satu aksi. Cocok untuk tile yang belum dicat dalam region besar atau merebut area musuh secara masif.
+
+  \item \textbf{Mopper.} Agen yang bertugas menghapus cat musuh dan mempertahankan tile yang telah dicat oleh tim. Memiliki kemampuan \textit{mop swing} yang dapat mengenai beberapa robot musuh sekaligus. Ini efektif untuk memperlambat ekspansi lawan.
+
+  \item \textbf{Tower.} Agen \textit{spawner} dan koordinator. Tidak bergerak, namun bertanggung jawab atas produksi robot baru dengan rasio yang disesuaikan fase permainan. Agen ini bisa dikonfigurasi lebih lanjut terkait dengan siklus hidup dari Agen ini
+\end{enumerate}
+
+\subsection{\textit{Emergent Behavior}}
+
+\textit{Emergent behavior} adalah fenomena di mana perilaku kompleks dan terkoordinasi pada tingkat sistem muncul secara alami dari interaksi aturan-aturan sederhana pada tingkat individu, tanpa ada instruksi eksplisit untuk perilaku global tersebut \cite{wooldridge2009introduction}. Ini merupakan salah satu fenomena paling mendasar dan menarik dalam MAS.
+
+Dalam permainan Battlecode, tidak ada robot yang secara eksplisit "mengetahui" persentase coverage keseluruhan peta atau memiliki rencana global untuk mencapainya. Namun, dari kombinasi aturan lokal yang sederhana, perilaku global yang efektif muncul secara organik. Beberapa contoh \textit{emergent behavior} yang terbentuk adalah sebagai berikut.
+
+\begin{enumerate}
+  \item \textbf{Penyebaran coverage yang merata.} Setiap Soldier menggunakan \textit{sector partitioning} berbasis ID-nya untuk memilih zona yang berbeda. Tanpa koordinasi eksplisit, mereka secara alami menyebar ke seluruh peta, menghindari penumpukan di satu area.
+
+  \item \textbf{Respons defensif terhadap serangan musuh.} Ketika Mopper mendeteksi tile musuh di dekatnya, ia beralih ke mode \textsc{Combat}. Karena banyak Mopper beroperasi secara paralel, respons defensif ini muncul secara simultan di seluruh peta tanpa koordinasi terpusat.
+
+  \item \textbf{Konvergensi menuju kemenangan.} Seluruh Soldier secara independen beralih ke mode \textit{endgame} (pure coverage). Karena semua robot mengikuti aturan yang sama, perilaku yang muncul adalah intensifikasi serangan coverage secara serentak di seluruh peta. Ini membuat seolah-olah ada rancangan global yang diatur oleh lingkungan global, namun sebetulnya, itu \textit{merely} hanyalah luaran dari aturan lokal yang diterapkan oleh setiap bot yang dihasilkan.
+\end{enumerate}
+
+\textit{Emergent behavior} ini menunjukkan kekuatan paradigma MAS: dengan merancang aturan lokal yang tepat pada tingkat individu agen, perilaku kolektif yang diinginkan pada tingkat sistem dapat muncul secara alami tanpa perlu koordinasi terpusat yang mahal secara komputasional.
+
+\section{\textit{Maximum Coverage Problem}}
+
+\subsection{Definisi Formal}
+
+\textit{Maximum Coverage Problem} (MCP) adalah masalah optimasi kombinatorial yang didefinisikan secara formal sebagai berikut. Diberikan suatu himpunan semesta $U = \{e_1, e_2, \ldots, e_n\}$ yang terdiri dari $n$ elemen, sebuah koleksi set $\mathcal{S} = \{S_1, S_2, \ldots, S_m\}$ dengan $S_i \subseteq U$, dan sebuah bilangan bulat $k$. Tujuan dari MCP adalah memilih paling banyak $k$ set dari $\mathcal{S}$ sedemikian sehingga jumlah elemen yang tercakup dimaksimalkan \cite{hochbaum1998analysis}. Secara matematis, MCP dapat dituliskan sebagai:
+
+$$\text{maksimalkan} \quad f(\mathcal{T}) = \left| \bigcup_{S_i \in \mathcal{T}} S_i \right| \quad \text{dengan syarat} \quad \mathcal{T} \subseteq \mathcal{S},\ |\mathcal{T}| \leq k$$
+
+Kalimat diinstransiasi dalam kasus permainan Battlecode. Di Battlecode, himpunan semesta $U$ adalah seluruh tile di peta, setiap set $S_i$ merepresentasikan himpunan tile yang dapat dijangkau dan dicat oleh robot $i$ dalam satu sesi operasi, dan batas $k$ dianalogikan dengan jumlah robot aktif atau jumlah ronde yang tersisa.
+
+\subsection{Kompleksitas NP-\textit{Hard}}
+
+MCP terbukti bersifat NP-\textit{hard} melalui reduksi polinomial dari masalah \textit{Set Cover}, yang telah dibuktikan NP-complete oleh Karp (1972) \cite{cormen2009introduction}. Konsekuensinya, tidak ada algoritma deterministik dengan kompleksitas polinomial yang dapat menjamin solusi optimal untuk semua instansi MCP, kecuali jika P = NP.
+
+Dalam konteks Battlecode, implikasi praktis dari sifat NP-\textit{hard} ini sangat signifikan. Mencari penugasan robot ke area peta yang secara global optimal tidak dapat dilakukan secara efisien, apalagi dengan batasan bytecode per ronde yang sangat ketat.
+
+\subsection{Submodularitas dan Garansi Aproksimasi Greedy}
+
+Salah satu sifat terpenting dari fungsi coverage adalah \textbf{submodularitas}. Suatu fungsi himpunan $f: 2^U \to \mathbb{R}$ dikatakan submodular jika untuk setiap $A \subseteq B \subseteq U$ dan setiap $x \notin B$, berlaku:
+
+$$f(A \cup \{x\}) - f(A) \geq f(B \cup \{x\}) - f(B)$$
+
+Artinya, \textit{marginal gain} dari menambahkan elemen $x$ ke himpunan yang lebih kecil selalu lebih besar atau sama dengan \textit{marginal gain} menambahkan $x$ ke himpunan yang lebih besar. Sifat ini mencerminkan hukum \textit{diminishing returns}. dimana setiap robot tambahan memberikan kontribusi coverage yang semakin kecil karena tile yang mudah dijangkau sudah dicat oleh robot-robot sebelumnya.
+
+Fungsi coverage $f(\mathcal{T}) = |\bigcup_{S_i \in \mathcal{T}} S_i|$ terbukti submodular. Nemhauser et al.\ (1978) membuktikan bahwa untuk fungsi submodular yang monoton dan tidak negatif, algoritma greedy yang selalu memilih set dengan \textit{marginal gain} terbesar menghasilkan aproksimasi dengan garansi \cite{nemhauser1978analysis} sebesar
+
+$$f(\mathcal{T}_{\text{greedy}}) \geq \left(1 - \frac{1}{e}\right) f(\mathcal{T}^*) \approx 0{,}632 \cdot f(\mathcal{T}^*)$$
+
+di mana $\mathcal{T}^*$ adalah solusi optimal. Garansi $(1 - 1/e) \approx 63{,}2\%$ ini juga terbukti optimal. Tidak ada algoritma polinomial yang dapat melampaui batas ini kecuali P = NP \cite{hochbaum1998analysis}. Dalam Battlecode, kondisi kemenangan adalah coverage 70\% dari seluruh peta, sehingga greedy secara teoritis berada tepat di ambang batas minimal untuk mencapai kemenangan, dan dalam praktiknya dapat melampaui garansi teoritis tersebut.
+
+\subsection{Battlecode dalam Perspektif MCP}
+
+MCP klasik mengasumsikan lingkungan statis, yaitu elemen yang sudah tercakup tidak dapat menjadi tidak tercakup. Akan tetapi, untuk meng-\textit{cover} tile di Battlecode itu jauh lebih kompleks. Perhatikan bahwa permainan ini menghadirkan varian yang jauh lebih 'memusingkan' karena bersifat \textbf{dinamis} dan \textbf{multi-agen}.
+
+\begin{enumerate}
+  \item \textbf{Dynamic MCP.} Tile yang sudah dicat oleh tim dapat direbut kembali oleh robot musuh, sehingga coverage dapat turun. Akibatnya, problem yang dihadapi bukan MCP statis satu kali, melainkan serangkaian keputusan coverage yang saling bergantung sepanjang 2000 ronde.
+
+  \item \textbf{Multi-Agent MCP.} Banyak robot beraksi secara serentak setiap ronde. Setiap robot harus mempertimbangkan tile mana yang akan dicat tanpa mengetahui keputusan robot lain secara real-time, sehingga koordinasi diperlukan untuk menghindari redundansi (banyak robot mengecat tile yang sama).
+
+  \item \textbf{Pengamatan Terbatas oleh Setiap Bot.} Robot hanya dapat mengamati tile dalam radius $\sqrt{20}$ petak. Coverage global tidak diketahui secara langsung oleh siapapun, sehingga keputusan harus diambil berdasarkan informasi lokal yang tidak lengkap.
+\end{enumerate}
+
