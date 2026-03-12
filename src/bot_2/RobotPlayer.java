@@ -2,14 +2,8 @@ package bot_2;
 
 import battlecode.common.*;
 
-/*
-Tiap unit memutuskan action dan movesnya sesuai dengan jenisnya, tetapi semuanya menggunakan pendekatan greedy:
- - Towers mengambil unit terbaik yang diambil berdasarkan rounds.
- - Soldiers membangun ruins yang hampir complete, mewarnai tile, atau explore.
- - Splashers menarget daerah yang memiliki paling banyak warna musuh.
- - Moppers menarget musuh dengan banyak cat paling rendah atau membersihkan warna musuh yang dekat dengan reruntuhan yang ia ketahui
- */
 public class RobotPlayer {
+
     static RobotController rc;
     static Team myTeam;
     static Team enemyTeam;
@@ -35,9 +29,9 @@ public class RobotPlayer {
         while (true) {
             try {
                 switch (rc.getType()) {
-                    //case SOLDIER -> SoldierBot.turn();
-                    //case SPLASHER -> SplasherBot.turn();
-                    //case MOPPER -> MopperBot.turn();
+                    case SOLDIER -> SoldierBot.turn();
+                    case SPLASHER -> SplasherBot.turn();
+                    case MOPPER -> MopperBot.turn();
                     default -> TowerBot.turn();
                 }
             } catch (Exception e) {
