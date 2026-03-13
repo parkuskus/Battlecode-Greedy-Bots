@@ -1,9 +1,4 @@
-<<<<<<< HEAD:src/alternative_bots_1/Messaging.java
 package alternative_bots_1;
-=======
-package bot_kevin_1;
-
->>>>>>> 994546f (fix: update package name from bot_2 to bot_kevin_1 in Messaging, RobotPlayer, and TowerBot classes):src/bot_kevin_1/Messaging.java
 import battlecode.common.*;
 
 /*
