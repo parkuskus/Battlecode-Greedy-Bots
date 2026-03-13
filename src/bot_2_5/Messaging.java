@@ -1,21 +1,12 @@
-package alternative_bots_1;
+package bot_2_5;
+
 import battlecode.common.*;
 
-/*
-    - Format pesan, inspired by Just Woke Up team:
-    [31..29] 3-bit code
-    [28..23] x coordinate (6 bits)
-    [22..17] y coordinate (6 bits)
-    [16..15] payload (2 bits)
-    [14..0]  unused / future
-
-    - Marking:
-    0 = TOWER_BUILT  (location + tower base type)
-    1 = NEED_MOPPER  (location of enemy paint)
-    2 = ENEMY_TOWER  (location of enemy tower)
+/**
+ * Lightweight inter-robot messaging using bit-packed 32-bit integers.
  */
-
 public class Messaging {
+
     static final int CODE_TOWER_BUILT = 0;
     static final int CODE_NEED_MOPPER = 1;
     static final int CODE_ENEMY_TOWER = 2;
@@ -25,17 +16,12 @@ public class Messaging {
     static int           towerCount  = 0;
 
     static MapLocation needMopperAt = null;
-    static MapLocation enemyTowerAt = null;
-    static int enemyTowerSeenRound = -9999;
 
     static void init() {
         towerCount = 0;
         needMopperAt = null;
-        enemyTowerAt = null;
-        enemyTowerSeenRound = -9999;
     }
 
-    // encoding informasi ke int 32 bit
     static int encode(int code, MapLocation loc, int payload) {
         return ((code & 0x7) << 29)
              | ((loc.x & 0x3F) << 23)
@@ -72,21 +58,9 @@ public class Messaging {
             switch (code) {
                 case CODE_TOWER_BUILT -> registerTower(loc, payloadToType(pay));
                 case CODE_NEED_MOPPER -> needMopperAt = loc;
-                case CODE_ENEMY_TOWER -> registerEnemyTower(loc, round);
+                case CODE_ENEMY_TOWER -> { }
             }
         }
-    }
-
-    static void registerEnemyTower(MapLocation loc, int round) {
-        enemyTowerAt = loc;
-        enemyTowerSeenRound = round;
-    }
-
-    static MapLocation enemyTowerHint() {
-        RobotController rc = RobotPlayer.rc;
-        if (enemyTowerAt == null) return null;
-        if (rc.getRoundNum() - enemyTowerSeenRound > 220) return null;
-        return enemyTowerAt;
     }
 
     static void registerTower(MapLocation loc, UnitType type) {
@@ -114,8 +88,6 @@ public class Messaging {
         }
     }
 
-    // algoritma greedy untuk mencari tower terdekat yang diketahui 
-    // tower dengan jarak terkecil akan dijadikan informasi bagi robots untuk isi ulang paint
     static MapLocation nearestPaintTower(MapLocation from) {
         MapLocation best = null;
         int bestDist = Integer.MAX_VALUE;
@@ -168,7 +140,6 @@ public class Messaging {
         };
     }
 
-    // robot akan send message ke tower terdekat
     static void relayToNearbyTower(RobotInfo[] allies) throws GameActionException {
         RobotController rc = RobotPlayer.rc;
         for (RobotInfo ally : allies) {
