@@ -1,4 +1,9 @@
+<<<<<<<< HEAD:src/kevin_bot_2/RobotPlayer.java
 package kevin_bot_2;
+========
+package bot_kevin_1;
+
+>>>>>>>> 994546f2518a7cb1e4ad052c155d5e72845ed538:src/bot_kevin_1/RobotPlayer.java
 import battlecode.common.*;
 
 public class RobotPlayer {
