@@ -1,7 +1,251 @@
-\section{Strategi Greedy 1 (Athilla)}
+\section{Mapping Persoalan}
+\subsection{Himpunan Kandidat}
 
+Himpunan kandidat dalam persoalan Battlecode 2025 mencakup seluruh kemungkinan aksi yang dapat diambil oleh setiap unit, baik robot ataupun menara, pada setiap ronde. Berikut adalah rincian kandidat tersebut.
 
-\section{Strategi Greedy 2 (Kevin)}
+\begin{itemize}
+    \item \textbf{Pergerakan robot}\\
+    Ini yang mencakup sembilan opsi arah, yaitu delapan arah mata angin (Timur, Tenggara, Selatan, Barat Daya, Barat, Barat Laut, Utara, Timur Laut) dan satu opsi untuk tidak bergerak (\textit{stay}). Kandidat ini hanya valid jika petak tujuan tidak ditempati unit lain, bukan merupakan tembok (\textit{walls}), dan bukan reruntuhan (\textit{ruins})[cite: 44, 46, 253, 254].
+    
+    \item \textbf{Aksi robot}
+    \begin{itemize}
+        \item \textbf{Soldier} dapat menyerang satu petak dengan radius aksi 3. Jika petak kosong atau sudah ada cat, warnai petak tersebut. Soldier juga dapat menyerang tower yang menimbulkan 50 damage ke menara musuh.
+        \item \textbf{Splasher} dapat menyerang area melingkar dengan radius 2 dari titik pusat. Titik pusat serangan maksimal 2 petak dari lokasi splasher. AKsi ini juga bisa mewarnai petak kosong atau petak yang telah diwarnai. Splasher menimbulkan 100 damage ke menara musuh.
+        \item \textbf{Mopper} dapat menghapus cat musuh pada petak dalam radius $\sqrt{2}$, men-\textit{transfer} cat ke robot atau menara sekutu, dan melakukan ayunan mop ke empat pilihan arah (atas, bawah, kiri, kanan)[cite: 135, 144, 152].
+    \end{itemize}
+    
+    \item \textbf{Sumber Daya} 
+    \begin{itemize}
+        \item \textbf{Paint} merupakan sumber daya yang membuat robot dapat diproduksi dan bisa tetap melakukan aksi. Tanpa adanya cat, robot tidak dapat melakukan serangan.
+        \item \textbf{Chips} merupakan sumber daya yang dibutuhkan untuk membangun tower dan juga robot.
+    \end{itemize}
+    
+    \item \textbf{Menara}\\
+    Kandidat ini meliputi pemilihan lokasi reruntuhan (\textit{ruins}) untuk meletakkan penanda pola menara (\textit{markTowerPattern}) atau \textit{Special Resource Pattern} (SRP) di area $5\times5$. Pada unit menara, kandidat terdiri dari pemilihan tipe robot (Soldier, Splasher, atau Mopper) yang akan dimunculkan (\textit{spawn}) di radius 2 petak, serta opsi untuk melakukan \textit{upgrade} menara ke level yang lebih tinggi (Level 2 atau Level 3).
+    
+    \item \textbf{Komunikasi dan Informasi}\\
+    Kandidat ini mencakup seluruh pesan dalam bentuk integer 32-bit yang dapat dikirimkan kepada unit sekutu serta pemilihan jenis warna (\textit{primary} atau \textit{secondary color}) yang akan diletakkan pada peta sebagai alat koordinasi visual.
+    
+    \item \textbf{Kandidat Terminasi:} Opsi bagi setiap robot untuk melakukan penghancuran diri secara instan (\textit{disintegrate}) jika diperlukan oleh strategi tertentu[cite: 283].
+\end{itemize}
 
+\subsection{Himpunan Solusi}
 
-\section{Strategi Greedy 3 (Aufar)}
+Himpunan solusi dalam algoritma greedy untuk Battlecode 2025 adalah sebuah himpunan yang terdiri dari elemen-elemen yang telah dipilih dari himpunan kandidat pada setiap langkah yang akhirnya membentuk solusi lengkap. Himpunan ini merepresentasikan akumulasi seluruh aksi yang diambil oleh tim untuk mencapai tujuan akhir permainan. Rincian dari himpunan solusi ini meliputi
+
+\begin{itemize}
+    \item \textbf{Rekam Jejak Spasial (Peta Kemenangan)}\\
+     Kumpulan petak-petak di grid yang telah berhasil diwarnai dengan warna tim. Solusi dianggap mendekati optimal jika jumlah petak dalam himpunan ini melebihi 70\% dari total petak yang dapat diwarnai di seluruh peta.
+    
+    \item \textbf{Konfigurasi Infrastruktur Menara}\\
+     Himpunan menara yang berhasil dibangun (maksimal 25 menara) yang mencakup koordinat posisi, jenis menara (Money, Paint, atau Defense), serta tingkat level menara tersebut (Level 1, 2, atau 3) sebagai hasil dari aksi konstruksi dan upgrade yang telah tuntas.
+    
+    \item \textbf{Populasi Robot Aktif}\\
+     Himpunan robot yang masih bertahan hidup (\textit{alive}) di arena sebagai hasil dari keputusan \textit{spawn} yang tepat. Setiap elemen dalam himpunan ini mencakup ID unik robot, tipe robot (Soldier, Splasher, Mopper), dan status sumber daya (HP serta cadangan cat) yang dimilikinya.
+    
+    \item \textbf{Akumulasi Sumber Daya Global}\\
+     Total jumlah \textit{chips} yang dikumpulkan dan jumlah cat yang tersedia di seluruh menara dan robot. Himpunan ini mencerminkan efektivitas ekonomi tim dalam mendukung aksi-aksi selanjutnya.
+    
+    \item \textbf{Jalur Komunikasi dan Informasi}\\
+     Himpunan penanda (\textit{markers}) yang telah ditempatkan secara permanen di peta serta basis data pesan yang telah berhasil ditukarkan antar-unit untuk mengoordinasikan pergerakan kolektif tim.
+    
+    \item \textbf{Status Eliminasi Lawan}\\
+     Himpunan unit (robot dan menara) musuh yang telah berhasil dihancurkan atau dikurangi HP-nya hingga nol sebagai bagian dari strategi ofensif untuk memenangkan permainan melalui jalur penghancuran total.
+\end{itemize}
+
+\subsection{Fungsi Solusi}
+
+Fungsi solusi digunakan untuk menentukan apakah sekumpulan pilihan yang telah diambil dari himpunan kandidat telah membentuk solusi yang lengkap atau apakah permainan harus dihentikan karena telah mencapai kondisi terminasi tertentu. Dalam Battlecode 2025, fungsi solusi memberikan nilai \textit{true} jika salah satu dari kondisi berikut terpenuhi.
+
+\begin{itemize}
+    \item \textbf{Kondisi Dominasi Wilayah (Threshold)}\\
+     Fungsi solusi terpenuhi jika tim berhasil mewarnai lebih dari 70\% dari total petak yang dapat diwarnai (\textit{paintable tiles}) pada peta. Ini merupakan indikator utama kemenangan absolut.
+    
+    \item \textbf{Kondisi Eliminasi Total}\\
+     Fungsi solusi memberikan nilai \textit{true} apabila seluruh unit musuh telah berhasil dihancurkan (HP mencapai nol) sehingga tidak ada lagi entitas lawan yang tersisa di arena.
+    
+    \item \textbf{Kondisi Batas Waktu (Round Limit)}\\
+     Solusi dianggap lengkap secara otomatis apabila permainan telah mencapai batas maksimal 2000 ronde. Dalam kondisi ini, fungsi solusi akan memicu mekanisme \textit{tiebreaker} untuk menentukan pemenang berdasarkan urutan prioritas yang telah ditetapkan (luas area, jumlah menara, sisa \textit{chips}, jumlah cat, dan jumlah robot).
+    
+    \item \textbf{Kondisi Diskualifikasi Teknis}\\
+     Fungsi solusi terpenuhi secara paksa jika tim lawan melanggar batasan program, seperti melebihi batas total waktu eksekusi (\textit{execution time}) yang diizinkan atau mengalami \textit{runtime error} yang fatal pada seluruh unitnya.
+\end{itemize}
+
+\subsection{Fungsi Seleksi}
+
+Fungsi seleksi merupakan inti dari strategi greedy yang digunakan untuk memilih kandidat terbaik pada setiap langkah keputusan. Dalam Battlecode 2025, fungsi seleksi diimplementasikan melalui berbagai heuristik yang bertujuan untuk memaksimalisasi keuntungan atau meminimalisasi kerugian pada setiap ronde. Beberapa kriteria seleksi yang diterapkan meliputi
+
+\begin{itemize}
+    \item \textbf{Heuristik Jarak Minimum (Proximity)}\\
+    Fungsi seleksi ini memilih kandidat pergerakan yang meminimalisasi jarak Euclidean atau Manhattan menuju target strategis, seperti reruntuhan (\textit{ruins}) terdekat untuk pembangunan menara atau menara sekutu untuk pengisian ulang cat.
+    
+    \item \textbf{Heuristik Efisiensi Pewarnaan (Paint Efficiency)}\\
+    Fungsi seleksi ini memilih kandidat aksi serangan yang memberikan penambahan persentase wilayah sekutu terbesar dengan biaya cat terkecil. Contohnya, Splasher akan memilih pusat serangan yang mencakup jumlah petak kosong atau petak musuh terbanyak dalam radius $AoE$-nya.
+    
+    \item \textbf{Heuristik Penyerangan (Offensive)}\\
+    Fungsi seleksi ini memilih untuk menyerang unit musuh yang memiliki HP terendah agar dapat segera dieliminasi dari permainan, atau memprioritaskan penghapusan cat musuh di wilayah yang kritis.
+    
+    \item \textbf{Heuristik Manajemen Ekonomi (Resource Balancing)}\\
+     Pada unit menara, fungsi seleksi menentukan tipe robot yang akan di-\textit{spawn} berdasarkan kondisi sisa \textit{chips} dan kebutuhan lapangan. Contohnya, hingga ronde ke-400, akan dibangun \textit{money tower} terlebih dahulu untuk meningkatkan jumlah chips agar pada ronde setelahnya, \textit{tower} jenis lain dapat dibangun.
+\end{itemize}
+
+\subsection{Fungsi Kelayakan}
+
+Fungsi kelayakan dalam strategi greedy Battlecode 2025 berfungsi untuk memeriksa apakah suatu kandidat yang telah dipilih memenuhi semua batasan (\textit{constraints}) teknis dan aturan permainan sebelum aksi tersebut benar-benar dieksekusi. Jika suatu kandidat tidak lolos uji kelayakan, maka kandidat tersebut akan dibatalkan dan algoritma akan mencari kandidat terbaik berikutnya. Kriteria kelayakan utama meliputi
+
+\begin{itemize}
+    \item \textbf{Kelayakan Cooldown} 
+    Fungsi kelayakan ini memastikan bahwa \textit{movement cooldown} bernilai kurang dari 10 sebelum melakukan pergerakan, dan \textit{action cooldown} bernilai kurang dari 10 sebelum melakukan serangan, pewarnaan, \textit{spawn}, atau transfer cat.
+    
+    \item \textbf{Kelayakan Sumber Daya}\\
+    Fungsi kelayakan ini memeriksa apakah jumlah cadangan cat robot mencukupi untuk biaya serangan atau pewarnaan tertentu. Selain itu, untuk aksi \textit{spawn} robot atau pembangunan menara, jumlah \textit{chips} global dan cadangan cat pada menara harus memenuhi biaya produksi yang ditetapkan.
+    
+    \item \textbf{Kelayakan Map}\\
+    Fungsi kelayakan ini memastikan petak tujuan pergerakan tidak ditempati oleh unit lain, bukan merupakan tembok yang tidak dapat dilewati, dan bukan reruntuhan. Untuk aksi pembangunan menara, fungsi ini memverifikasi apakah lokasi tersebut adalah \textit{ruins} dan apakah pola cat $5\times5$ di sekitarnya sudah sesuai.
+    
+    \item \textbf{Kelayakan Jarak Pandang dan Radius}\\
+    Fungsi kelayakan ini menjamin bahwa aksi hanya dilakukan pada petak yang berada dalam radius penglihatan (\textit{vision range}) sebesar $\sqrt{20}$ unit dan masuk dalam radius aksi spesifik masing-masing tipe unit.
+    
+    \item \textbf{Kelayakan Komputasi (Bytecode)}\\
+    Fungsi kelayakan ini memastikan logika pengambilan keputusan tidak melebihi batas \textit{bytecode}, yaitu 17.500 untuk robot dan 20.000 untuk menara. Jika ambang batas hampir tercapai, fungsi kelayakan akan memaksa penggunaan \textit{Clock.yield} agar komputasi dapat dilanjutkan pada ronde berikutnya tanpa mengalami pemutusan paksa.
+    
+    \item \textbf{Kelayakan Konektivitas Komunikasi}\\
+     Khusus untuk aksi pengiriman pesan, fungsi kelayakan memverifikasi apakah unit pengirim dan penerima terhubung melalui jalur cat sekutu (\textit{paint path}) yang kontinu.
+\end{itemize}
+
+\subsection{Fungsi Objektif}
+
+Fungsi objektif dalam strategi greedy Battlecode 2025 adalah fungsi yang digunakan untuk mengukur kualitas dari pilihan yang diambil oleh fungsi seleksi terhadap pencapaian solusi optimal. Karena setiap bot diwajibkan memiliki heuristik yang berbeda, fungsi objektif dapat bervariasi tergantung pada fokus strategi masing-masing bot, namun secara umum mengarah pada poin-poin berikut.
+
+\begin{itemize}
+    \item \textbf{Maksimalisasi Cakupan Wilayah}\\
+     Tujuan utama bot adalah memaksimalkan persentase luas area yang diwarnai dengan warna tim di atas grid. Setiap aksi pewarnaan dievaluasi berdasarkan kontribusinya terhadap pencapaian target kemenangan 70\% dari seluruh petak yang dapat diwarnai.
+    
+    \item \textbf{Maksimisasi Produksi Sumber Daya}\\
+    Fungsi objektif salah satunya adalah meningkatkan laju pendapatan \textit{chips} per ronde melalui pembangunan dan peningkatan level menara uang (\textit{Money Tower}) serta penyelesaian pola sumber daya khusus (SRP). Hal ini bertujuan untuk memastikan tim memiliki modal yang cukup untuk melakukan \textit{spawn} unit secara kontinu.
+    
+    \item \textbf{Minimalisasi Kekuatan Lawan}\\
+    Objektif dalam game ini juga tentunya adalah mengurangi jumlah unit dan menara musuh seefisien mungkin. Fungsi ini memberikan nilai tinggi pada aksi yang memberikan kerusakan (\textit{damage}) besar pada menara musuh atau menghapus cat musuh di area strategis guna memutus jalur komunikasi dan pergerakan lawan.
+    
+    \item \textbf{Maksimalisasi Masa Hidup Unit (Sustainability)}\\
+     Selain menyerang lawan, objektif kita tentunya menjaga agar jumlah robot dan menara sekutu tetap tinggi dengan cara menjaga cadangan cat agar tidak berada di bawah 50\% (untuk menghindari penalti \textit{cooldown}) dan memastikan HP unit tidak mencapai nol.
+\end{itemize}
+
+\section{Strategi Greedy Bot Alternatif 1: Greedy Offensive}
+
+Strategi \texttt{alternative\_bots\_1} dibangun dengan paradigma \textit{offensive greedy}, yaitu setiap unit selalu mencari aksi lokal bernilai serang tertinggi pada ronde berjalan, lalu hanya mundur sementara bila sumber daya kritis. Dengan kata lain, beberapa aspek seperti refill, transfer paint, dan ekonomi bukan dijadikan fungsi objektif utama.
+
+\subsection{Prinsip-Prinsip}
+
+\subsubsection{Soldier}
+
+Soldier menggunakan status \texttt{ATTACK}, \texttt{RUSH}, \texttt{BUILD}, \texttt{BUILD\_SRP}, dan \texttt{REFILL}. Sifat offensivenya terlihat pada urutan keputusan berikut.
+
+\begin{enumerate}
+    \item Jika tower musuh terlihat/terhint dan paint cukup, langsung \texttt{ATTACK}.
+    \item Jika tower belum terlihat, \texttt{RUSH} ke target simetri lawan (3 slot rotasi).
+    \item Jika early economy belum selesai, lakukan \texttt{BUILD}/\texttt{BUILD\_SRP} secukupnya.
+    \item Jika paint kritis, \texttt{REFILL} ke tower terdekat lalu kembali menyerang.
+\end{enumerate}
+
+\subsubsection{Splasher}
+
+Splasher menghitung nilai setiap titik splash kandidat dalam radius aksi. Nilai titik tidak hanya dari tile musuh yang kena, tetapi juga dari kedekatan dengan tower musuh, keberadaan unit musuh, dan potensi konversi tile kosong menjadi wilayah ally. Dengan ini, Splasher berfungsi sebagai unit offensive dengan \textit{marginal gain} area tertinggi per attack.
+
+\subsubsection{Mopper}
+
+Walau terlihat defensif, Mopper dalam strategi ini bersifat offensive-support. Mopper akan membersihkan paint musuh di titik serang kritis, mengejar unit musuh untuk mengurangi tekanan balik, dan transfer paint ke ally yang rendah agar gelombang serangan tidak putus. Seluruh aksi ini diurutkan berdasarkan prioritasnya.
+
+\subsubsection{Tower}
+
+Tower menerapkan spawn greedy berbasis fase
+\begin{enumerate}
+    \item Early: 2 soldier + 2 splasher + 1 mopper
+    \item Mid: 2 soldier + 3 splasher + 1 mopper
+    \item Late: 2 soldier + 2 splasher + 1 mopper
+\end{enumerate}
+
+\subsubsection{Navigasi}
+
+Navigasi memilih arah dengan skor terbaik berdasarkan:
+\begin{enumerate}
+    \item penurunan jarak ke target,
+    \item kualitas tile (ally/empty/enemy paint),
+    \item penalti osilasi posisi, dan
+    \item konsistensi arah gerak.
+\end{enumerate}
+
+Jika macet, \texttt{bugNav} mengambil alih agar unit tidak stall terlalu lama. Ini kritikal pada strategi offensive karena kehilangan 1-2 turn gerak dapat menghilangkan momentum push di frontline.
+
+\subsection{Eksplorasi}
+
+Untuk \texttt{alternative\_bots\_1}, eksplorasi dilakukan pada dua algoritma greedy offensive berikut.
+\begin{enumerate}
+    \item Menang dengan mempercepat jatuhnya tower lawan secepat mungkin. Dengan ini, robots bisa memberikan \textit{snowball effect} ketika simetri tepat. Kelemahannya adalah tingginya risiko kekurangan paint dan jika sudah gagal, tim bisa kehilangan banyak tempo karena gerakan sia-sia.
+    \item Menang dengan offense yang dikombinasikan dengan defensi yang tepat. Serangan dilancarkan, tetapi juga tetap memperhatikan bahan bakar. Hal ini menguntungkan sebab memberikan konsistensi lintasan pada map, tetapi untuk menyetel parameter butuh eksperimen berkali-kali.
+\end{enumerate}
+
+\subsection{Analisis Efisiensi}
+
+\subsubsection{Efisiensi Komputasi per Komponen}
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.2\textwidth} >{\raggedright\arraybackslash}p{0.3\textwidth} >{\raggedright\arraybackslash}p{0.44\textwidth}}
+\toprule
+\textbf{Komponen} & \textbf{Beban Komputasi} & \textbf{Implikasi Efisiensi} \\
+\midrule
+\endhead
+Soldier & Scan ruin, enemy, tile sekitar, cek status transisi & Tetap lokal; cocok untuk bytecode terbatas, terutama karena ada prioritas status sehingga search space dipangkas. \\
+Splasher & Evaluasi beberapa kandidat titik splash dan tile sekitarnya & Beban tertinggi di unit tempur; tetap feasible karena radius kandidat terbatas action radius dan ada \textit{early break} saat bytecode menipis. \\
+Mopper & Scoring enemy paint, enemy unit, dan transfer paint & Beban menengah dengan keuntungan tinggi karena tindakan pembersihan langsung meningkatkan kualitas front untuk unit offense lain. \\
+Tower spawn & Evaluasi tipe spawn, lokasi spawn, dan kondisi ancaman & Ringan-menengah; keputusan periodik, bukan search global. \\
+Navigasi & Penilaian hingga 8 arah per langkah, anti-osilasi, safety check & Sangat efisien dibanding pathfinding global; bug fallback menghindari kebuntuan berkepanjangan. \\
+Messaging & Read/encode/decode pesan ringkas 32-bit & Overhead rendah; nilai koordinasi tinggi. \\
+\bottomrule
+\end{longtable}
+
+\subsubsection{Efisiensi Operasional (Paint, Chips, Turn Tempo)}
+
+Dari sudut operasi pertandingan, selain soal bytecode, rasio output strategis terhadap resource juga penting. Berikut analisisnya.
+
+\begin{enumerate}
+    \item \textbf{Paint efficiency}: Splasher memberi konversi area tinggi per aksi; Soldier menjaga presisi target; Mopper meminimalkan kebocoran area.
+    \item \textbf{Chip efficiency}: Tower menyeimbangkan komposisi unit sehingga tidak boros spawn pada tipe yang tidak relevan fase.
+    \item \textbf{Tempo efficiency}: mekanisme \texttt{RUSH} ditambah prediksi simetri dan navigasi yang agresif.
+\end{enumerate}
+
+\subsection{Analisis Efektivitas}
+
+\subsubsection{Efektivitas Makro}
+
+\textbf{Fase early}\\
+ Strategi tetap offensive namun menyiapkan ekonomi minimum. Efeknya adalah pada gelombang serang pertama mungkin sedikit tertunda, tetapi gelombang kedua dan ketiga jauh lebih kuat karena suplai lebih stabil.
+
+\textbf{Fase mid}\\
+ Ini fase puncak efektivita. Tower hint sudah lebih sering tersedia, unit tempur cukup banyak, dan komposisi spawn mulai baik. Greedy offensive menghasilkan tekanan pada tower musuh dan kontrol area.
+
+\textbf{Fase late}\\
+ Fokus beralih untuk memaksimalkan coverage sambil mempertahankan ancaman tower. Splasher memberi kontribusi dominan untuk menutup game saat ruang menyempit.
+
+\subsubsection{Efektivitas Mikro}
+
+\begin{enumerate}
+    \item \textbf{Tower race} bisa dikatakan cukup unggul karena adanya kombinasi rush simetri dan gerilya pada tower musuh.
+    \item \textbf{Frontline paint war} cukup unggul karena duet Splasher (area gain) dan Mopper (area deny lawan).
+    \item \textbf{Sustain fight} cukup kuat karena transfer/refill terintegrasi dalam state machine, bukan ad-hoc.
+\end{enumerate}
+
+Beberapa skenario yang membuat robot ini lebih kuat dibandingkan robot lain ada pada saat map simetris dengan jalur tengah terbuka sehingga lawan lambat menyebar dan memaksa mereka utuk melakukan defense terus-terusan hingga akhirnya kalah di \textit{mid game}. Namun, sangat tidak efektif untuk map yang sempit dan memiliki banyak rintang apalagi jika lawan terus-terusan memberikan tekanan dengan cat yang dominan di teritori mereka.
+
+\subsection{Strategi yang Dipilih beserta Alasan dan Pertimbangan}
+
+Berdasarkan eksplorasi dan evaluasi di atas, strategi final \texttt{alternative\_bots\_1} adalah alternatif kedua yang menggabungkan antara offensive dan defensive secara hybrid meskipun dominan pada serangan.
+
+\subsubsection{Alasan Pemilihan}
+
+\begin{enumerate}
+    \item Rush langsung ke base lawan memang bisa memberikan efek \textit{snowball}, tetapi lebih rapuh terhadap kegagalan di awal. Strategi campuran menjaga agresi tetap tinggi dengan biaya kegagalan yang lebih rendah.
+
+    \item Soldier, Splasher, Mopper, dan Tower memiliki peran yang saling melengkapi. Penggunaan fase yang seimbang dalam \textit{spawning} unit bisa memaksimalkan strategi ini.
+
+    \item Keputusan tetap greedy secara lokal sehingga tidak memerlukan perencanaan global yang membutuhkan sinergi seluruh unit serta lebih kompleks.
+\end{enumerate}

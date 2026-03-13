@@ -1,7 +1,474 @@
+
 \section{Implementasi Greedy 1 (Athilla)}
 
 
-\section{Implementasi Greedy 2 (Kevin)}
+\section{Implementasi Greedy Bot Alternatif 1: Greedy Offensive}
 
+\subsection{Pseudocode}
+
+\begingroup
+\captionof{algorithm}{Greedy Offensive Territory Push (\texttt{SoldierBot.java})}
+\begin{algorithmic}[1]
+\Function{PaintAggressively}{$nearby$}
+    \State \text{// Pastikan tile tempat robot berdiri aman}
+    \If{\text{UnderfootPaint}() == \text{ENEMY} \textbf{or} \text{EMPTY}}
+        \State \text{Attack}(\text{CurrentLocation}); \Return
+    \EndIf
+    
+    \State $bestTarget \gets \text{null}$
+    \State $bestScore \gets -\infty$
+    
+    \ForAll{$info \in nearby$}
+        \If{\text{IsWall}(info) \textbf{or} \text{HasRuin}(info)} \textbf{continue} \EndIf
+        \If{\textbf{not} \text{CanAttack}(info.loc)} \textbf{continue} \EndIf
+        \If{\text{Paint}(info) == \text{ALLY}} \textbf{continue} \EndIf
+        
+        \State $score \gets 100 - \text{Distance}(info.loc)$
+        
+        \State \text{// Heuristik Serangan Teritorial}
+        \If{\text{Paint}(info) == \text{ENEMY}}
+            \State $score \gets score + 50$ \Comment{Offensive override}
+        \ElsIf{\text{Paint}(info) == \text{EMPTY}}
+            \State $score \gets score + 30$
+        \EndIf
+        
+        \If{$score > bestScore$}
+            \State $bestScore \gets score$
+            \State $bestTarget \gets info.loc$
+        \EndIf
+    \EndFor
+    
+    \If{$bestTarget \neq \text{null}$}
+        \State \text{Attack}(bestTarget)
+    \EndIf
+\EndFunction
+\end{algorithmic}
+\endgroup
+
+\vspace{2em}
+
+\begingroup
+\captionof{algorithm}{Greedy AoE Target Selection (\texttt{SplasherBot.java})}
+\begin{algorithmic}[1]
+\Function{FindBestSplashTarget}{$enemies, focusHint$}
+    \State $bestTarget \gets \text{null}$
+    \State $bestValue \gets MIN\_SPLASH\_VALUE - 1$
+    
+    \ForAll{$loc \in \text{ActionRadius}()$}
+        \If{\textbf{not} \text{CanAttack}(loc)} \textbf{continue} \EndIf
+        
+        \State $score \gets 0$
+        \State \text{// Heuristik Jarak ke Target Utama}
+        \ForAll{$enemy \in enemies$}
+            \If{$enemy.type == \text{TOWER}$ \textbf{and} $\text{Dist}(loc, enemy) \leq 4$}
+                \State $score \gets score + 24$
+            \ElsIf{$\text{Dist}(loc, enemy) \leq 2$}
+                \State $score \gets score + 14$
+            \EndIf
+        \EndFor
+        
+        \State \text{// Heuristik Kerusakan Area (Splash Radius)}
+        \ForAll{$tile \in \text{SplashArea}(loc)$}
+            \If{\text{Paint}(tile) == \text{ENEMY}}
+                \State $score \gets score + 10$ \Comment{Prioritas hapus cat musuh}
+            \ElsIf{\text{Paint}(tile) == \text{EMPTY}}
+                \State $score \gets score + 4$
+            \EndIf
+        \EndFor
+        
+        \If{$score > bestValue$}
+            \State $bestValue \gets score$
+            \State $bestTarget \gets loc$
+        \EndIf
+    \EndFor
+    \State \Return $bestTarget$
+\EndFunction
+\end{algorithmic}
+\endgroup
+
+\vspace{2em}
+
+\begingroup
+\captionof{algorithm}{Greedy Mopping and Steal Paint (\texttt{MopperBot.java})}
+\begin{algorithmic}[1]
+\Function{ExecuteMop}{$nearby, enemies$}
+    \State \text{// Hancurkan Tower jika bisa}
+    \If{\text{EnemyTowerInRange}()} \text{Attack}(Tower); \Return \EndIf
+    
+    \State \text{// Greedy Steal Paint dari Unit Musuh}
+    \State $bestTarget \gets \text{null}, bestScore \gets -\infty$
+    \ForAll{$enemy \in enemies \text{ (radius 2)}$}
+        \State $score \gets 30 - \text{Distance}(enemy)$
+        \State $paint \gets \text{SensePaint}(enemy.location)$
+        \If{$paint == \text{ENEMY}$} $score \gets score + 6$
+        \ElsIf{$paint == \text{ALLY}$} $score \gets score + 10$ \Comment{Keuntungan wilayah}
+        \EndIf
+        
+        \If{$score > bestScore$}
+            \State $bestScore \gets score$
+            \State $bestTarget \gets enemy$
+        \EndIf
+    \EndFor
+    \If{$bestTarget \neq \text{null}$} \text{Attack}(bestTarget); \Return \EndIf
+    
+    \State \text{// Greedy Clean Enemy Paint}
+    \State $bestPaint \gets \text{null}, bestPaintScore \gets -\infty$
+    \ForAll{$tile \in nearby \text{ with ENEMY\_PAINT}$}
+        \State $score \gets \text{CalculateThreatScore}(tile)$ \Comment{Dekat tower musuh / diri sendiri}
+        \If{$score > bestPaintScore$}
+            \State $bestPaintScore \gets score$
+            \State $bestPaint \gets tile$
+        \EndIf
+    \EndFor
+    \If{$bestPaint \neq \text{null}$} \text{Attack}(bestPaint) \EndIf
+\EndFunction
+\end{algorithmic}
+\endgroup
+
+\newpage
+\subsection{Struktur Data}
+
+Bagian ini menjelaskan struktur data pada level konsep, tipe, lokasi pemakaian, dan fungsinya pada strategi greedy offensive.
+\begin{table}[htbp]
+\centering
+\renewcommand{\arraystretch}{1.5} % Memberikan ruang ekstra antar baris agar rapi
+\begin{tabular}{|p{3.5cm}|p{3.5cm}|p{4cm}|p{4cm}|}
+\hline
+\textbf{Struktur Data} & \textbf{Lokasi File} & \textbf{Kegunaan} & \textbf{Mekanisme \& Kompleksitas} \\
+\hline
+\textbf{Ring Buffer} \newline (Circular Array) & \texttt{Nav.java} & Mendeteksi osilasi (gerakan bolak-balik) dengan menyimpan 10 posisi terakhir robot. & Penimpaan indeks yang kedaluwarsa menggunakan operasi modulo. Kompleksitas waktu $O(1)$, menghindari operasi \textit{shifting} array $O(N)$. \\
+\hline
+\textbf{Array-based Stack} \newline (Tumpukan Statis) & \texttt{Nav.java} & Menyimpan urutan arah saat mengeksekusi algoritma \textit{Bug Navigation} di sekitar halangan. & Menggunakan array statis berkapasitas 80 elemen dengan \textit{pointer} indeks. Operasi \textit{push} dan \textit{pop} berjalan konstan dalam $O(1)$. \\
+\hline
+\textbf Bitmasking & \texttt{Messaging.java} & Mengompresi berbagai informasi agar muat dalam satu \textit{payload} integer 32-bit. & Memanfaatkan operator \textit{bitwise} (\texttt{<<}, \texttt{>>}, \texttt{\&}, \texttt{|}) untuk memanipulasi bit secara langsung. \\
+\hline
+\textbf{Array Statis} ($O(1)$) & \texttt{Messaging.java}, \texttt{MopperBot.java} & Menyimpan daftar lokasi musuh atau bangunan tanpa perlu menggunakan ArrayList dinamis. & Saat elemen dihapus, elemen paling akhir di array dipindah untuk menimpa celah tersebut, mempertahankan kompleksitas $O(1)$. \\
+\hline
+\textbf{Finite State Machine} \newline (FSM) & Seluruh Robot Files & Mengatur siklus dan fase pengambilan keputusan robot (\texttt{REFILL}, \texttt{RUSH}, \texttt{SIEGE}) tiap gilirannya. & Evaluasi status menggunakan \textit{switch-case}. \\
+\hline
+\end{tabular}
+\caption{Analisis Penggunaan Struktur Data pada Bot}
+\end{table}
+
+\newpage
+\subsection{Fungsi dan Prosedur}
+
+\subsubsection{1. RobotPlayer}
+\begin{enumerate}
+	\item \texttt{run(robotController)}:
+	Inisialisasi konteks global (tim, musuh, ukuran peta, id unit), memanggil inisialisasi messaging, lalu menjadi dispatcher utama per ronde. Fungsi ini menentukan unit tipe apa yang aktif dan memanggil prosedur \texttt{turn()} yang sesuai (Soldier/Splasher/Mopper/Tower). Ia juga menjamin \texttt{Clock.yield()} selalu dipanggil sehingga loop permainan valid.
+\end{enumerate}
+
+\subsubsection{2. SoldierBot}
+\begin{enumerate}
+	\item \texttt{turn()}:
+	Prosedur yang memulai untuk soldier. Alur dimulai dari inisialisasi awal, baca pesan, sensing map dan robot, update simetri, registrasi tower ally, relay informasi, rekam tower musuh, pilih status greedy, eksekusi status, repaint lokal, penyelesaian pattern, simpan histori posisi.
+
+	\item \texttt{decideStatus(...)}:
+	Fungsi seleksi greedy utama Soldier. Menentukan \texttt{REFILL}, \texttt{BUILD}, \texttt{BUILD\_SRP}, \texttt{ATTACK}, atau \texttt{RUSH} berdasarkan kelayakan paint, fase ekonomi, visibilitas tower musuh, hint tower musuh, dan ketersediaan ruin. Ini menjadi implementasi langsung prinsip local-best-decision.
+
+	\item \texttt{executeAttack(...)}:
+	Prosedur ofensif untuk menghancurkan tower musuh. Funsgi menangani urutan attack-before-move-attack, maju jika belum dalam radius aksi, lalu memvalidasi apakah tower target masih hidup untuk membersihkan memori target usang.
+
+	\item \texttt{executeRush(...)}:
+	Prosedur dorong cepat ke prediksi basis lawan. Memiliki mekanisme ganti target saat tiba atau saat terlalu lama macet. Jika ada tower musuh terlihat di jalur, prosedur langsung eskalasi ke mode \texttt{ATTACK}. Terdapat fallback produktif ke frontier/empty tile agar unit tetap memberi nilai saat informasi target minim.
+
+	\item \texttt{executeRefill(...)}:
+	Prosedur sustain dengan menentukan tower refill terbaik (ally sensed, database messaging, lalu spawn tower), bergerak ke tower, dan melakukan transfer paint negatif untuk mengambil paint. Jika tidak ada target refill valid, status dikembalikan ke \texttt{RUSH}.
+
+	\item \texttt{executeBuild(...)}:
+	Prosedur pembangunan tower pada ruin terdekat dengan memilih tipe tower secara greedy-ekonomi (paint tower pertama, lalu target money tower, lalu paint), melakukan marking pattern, mewarnai mark, mendekatkan posisi, lalu complete pattern bila feasible.
+
+	\item \texttt{executeBuildSrp(...)}:
+	Prosedur penyelesaian resource pattern (SRP) dengan encari pusat SRP terbaik, melakukan mark, mewarnai mark, mendekat bila perlu, lalu complete SRP. Saat sukses, penanda fase ekonomi diperbarui.
+
+	\item \texttt{paintMarkedTiles(...)}:
+	Helper untuk mengecat tile yang memiliki mark namun warna aktual belum sesuai. Menjaga konsistensi antara blueprint pattern dan kondisi map dengan biaya aksi minimum.
+
+	\item \texttt{paintUnderFoot(...)}:
+	Menjamin tile tempat Soldier berdiri tidak dibiarkan koson atau musuh jika aksi tersedia. Fungsi ini menjaga keberlangsungan area control lokal tiap ronde.
+
+	\item \texttt{paintNearestTile(...)}:
+	Heuristik pewarnaan ringan setelah aksi utama. Prioritasnya adalah tile kosong legal terdekat, lalu tile musuh legal. Berfungsi meningkatkan coverage tanpa mengganggu tujuan ofensif utama.
+
+	\item \texttt{paintAggressively(...)}:
+	Alternatif heuristik pewarnaan agresif berbasis skor. Menilai candidate tile dari jarak dan jenis paint (enemy/empty). Meningkatkan potensi area gain saat dipakai.
+
+	\item \texttt{completeTowerPatterns(...)}:
+	Menyelesaikan pattern tower yang sudah valid di sekitar, termasuk pengecekan peluang complete resource pattern di grid center tertentu. Fungsi ini menangkap peluang ketika unit lewat.
+
+	\item \texttt{findBestSrpCenter(...)}:
+	Fungsi evaluasi kandidat pusat SRP dengan skor yang dipertimbangkan lewat jarak, kelayakan mark/complete, serta dominasi paint ally vs enemy di sekitar pusat.
+
+	\item \texttt{isEconomyPhaseDone(...)}:
+	Fungsi validasi dalam penentuan transisi fase ekonomi ke fase offensive penuh. Syarat berbasis jumlah money tower serta completion SRP atau batas ronde.
+
+	\item \texttt{findEnemyTower(...)}:
+	Funssi pencari tower musuh terbaik dari daftar enemy dengan scoring (prioritas hp rendah dan penalti defense tower). Fungsi ini memberi target kill yang lebih efisien secara lokal.
+
+	\item \texttt{findNearestRuin(...)}:
+	Funsgi ini mencari ruin terdekat yang belum terisi tower. Menjadi kandidat aksi \texttt{BUILD} saat fase ekonomi atau saat idle.
+
+	\item \texttt{findRefillTower(...)}:
+	Fungsi ini mencari tower ally terdekat yang memiliki paint cukup untuk refill. Bila tidak ada dalam sensing lokal, fallback ke basis data messaging.
+
+	\item \texttt{recordEnemyTower(...)}:
+	Fungsi ini merekam temuan tower musuh ke memori lokal dan broadcasting ke tower ally terdekat. Fungsi ini menjaga sinkronisasi target serang tim.
+
+	\item \texttt{initialize(...)}:
+	Inisialisasi spawn tower asal, tracker simetri, daftar target musuh, dan pemilihan slot target awal berdasarkan id unit.
+
+	\item \texttt{refreshEnemyTargets()}:
+	Fungsi ini melakukan regenerasi 3 target lawan dari SymmetryTracker dan dipanggil berkala agar prediksi target adaptif pada bukti simetri terbaru.
+\end{enumerate}
+
+\subsubsection{3. SplasherBot}
+\begin{enumerate}
+	\item \texttt{turn()}:
+	Prosedur memulai untuk splasher mulai dari inisialisasi, baca pesan, sensing, update simetri, registrasi tower, rekam/broadcast tower musuh, seleksi status, eksekusi status, serangan splash pasca-gerak, repaint tile sendiri, complete pattern, simpan histori posisi.
+
+	\item \texttt{decideStatus(...)}:
+	Seleksi state greedy Splasher: \texttt{REFILL}, \texttt{SIEGE}, \texttt{EXPAND}, atau \texttt{RUSH}. Keputusan dibantu oleh pertimbangan paint ratio, status fase ekonomi, keberadaan tower musuh/hint, serta ronde permainan.
+
+	\item \texttt{isEconomyPhaseDone(...)}:
+	Fungsi validasi untuk menentukan kapan Splasher boleh beralih dari dorongan ekonomi ke operasi ofensif penuh berbasis money tower dan batas ronde.
+
+	\item \texttt{executeRefill(...)}:
+	Prosedur refill paint Splasher dengan bergerak ke tower target dengan bug navigation untuk robust terhadap rintangan lalu mengambil paint saat dalam jarak transfer.
+
+	\item \texttt{executeSiege(...)}:
+	Prosedur mengepung tower musuh. Jika target valid, Splasher bergerak agresif hingga masuk radius aksi agar splash dapat dieksekusi optimal.
+
+	\item \texttt{executeRush(...)}:
+	Prosedur rush baseline. Jika ada cluster paint enemy/empty yang bernilai, Splasher menyimpang sebentar untuk area gain; jika tidak, kembali ke jalur target simetri.
+
+	\item \texttt{executeExpand(...)}:
+	Prosedur ekspansi coverage late-game. Menggunakan safe movement ke cluster paint; bila tidak ada kandidat bagus, fallback ke \texttt{executeRush}.
+
+	\item \texttt{findBestSplashTarget(...)}:
+	Fungsi objektif inti Splasher dengan engevaluasi semua titik serang legal memakai skor gabungan dari kedekatan dengan tower musuh, peluang kena unit musuh, gain konversi area enemy/empty pada radius splash. Funsgi ini menghasilkan titik dengan marginal gain tertinggi.
+
+	\item \texttt{findEnemyPaintCluster(...)}:
+	Fungsi pencari tujuan mikro untuk bergerak atau memperluas area. Menentukan tile cluster bernilai tinggi dari kombinasi jarak, status paint serta bias jarak dari spawn.
+
+	\item \texttt{completeTowerPatterns(...)}:
+	Fufsi penyelesaian opportunistic tower pattern saat melintas area ruin, agar unit tetap memberi kontribusi infrastruktur tanpa mengorbankan gaya ofensif.
+
+	\item \texttt{findEnemyTower(...)}:
+	Fungsi yang endeteksi keberadaan tower musuh terdekat di observasi lokal sebagai pemicu mode \texttt{SIEGE} dan sumber fokus scoring.
+
+	\item \texttt{findRefillTower(...)}:
+	Fungsi pencari tower refill terdekat yang punya paint cukup, dengan fallback ke database messaging jika sensing lokal tidak menemukan kandidat.
+
+	\item \texttt{initialize(...)}:
+	Inisialisasi spawn tower, tracker simetri, target-target lawan, dan indeks target awal Splasher.
+
+	\item \texttt{refreshEnemyTargets()}:
+	Fungsi yang memperbarui tiga target prediksi lawan dari modul simetri agar rute rush tetap relevan.
+\end{enumerate}
+
+\subsubsection{4. MopperBot}
+\begin{enumerate}
+	\item \texttt{turn()}:
+	Prosedur memulai untuk mopper: inisialisasi, baca pesan, sensing, update simetri, sinkronisasi data tower, deteksi tower musuh, seleksi status, eksekusi aksi mop/transfer/move atau refill, complete pattern, simpan histori.
+
+	\item \texttt{decideStatus(...)}:
+	Seleksi state greedy mopper dengan prioritas refill, lalu chase tower, clean request, atau rush. Keputusan memadukan paint ratio, fase ekonomi, info hint tower, dan request pembersihan dari messaging.
+
+	\item \texttt{isEconomyPhaseDone(...)}:
+	Kondisi transisi ke perilaku tempur penuh berdasarkan jumlah money tower dan batas ronde.
+
+	\item \texttt{executeMop(...)}:
+	Eksekusi aksi serang Mopper dengan urutan prioritas: tower musuh dalam jangkauan, unit musuh non-tower (steal paint pressure), lalu tile paint musuh dengan threat score tertinggi.
+
+	\item \texttt{calculateThreatScore(...)}:
+	Fungsi scoring ancaman untuk tile enemy paint dengan menilai nilai pembersihan berdasarkan kedekatan ke hint tower musuh dan kedekatan ke posisi Mopper.
+
+	\item \texttt{transferPaintToAlly(...)}:
+	Prosedur dukungan ofensif yang mentransfer paint ke ally non-tower terdekat dengan rasio paint terendah jika Mopper memiliki surplus, sehingga wave serangan tidak putus.
+
+	\item \texttt{movementLogic(...)}:
+	Prosedur navigasi taktis Mopper dengan urutan keputusan: chase tower/clean tile dekat tower, penuhi request clean, kejar unit musuh, bersihkan enemy paint, escort soldier, lalu rush target simetri.
+
+	\item \texttt{executeRefill(...)}:
+	Menjalankan refill dengan fallback arah fuzzy jika belum ada tower target. Jika target ada namun jauh, memakai bug navigation; jika dekat, transfer paint negatif.
+
+	\item \texttt{completeTowerPatterns(...)}:
+	Menyelesaikan tower pattern yang siap complete di sekitar Mopper.
+
+	\item \texttt{findEnemyTower(...)}:
+	Helper deteksi tower musuh dari observasi lokal.
+
+	\item \texttt{findRefillTower(...)}:
+	Helper pemilih tower refill terdekat yang paint-nya layak.
+
+	\item \texttt{findNearestCleanTileFromTarget(...)}:
+	Helper pemilih tile enemy paint terbaik yang dekat ke target tower musuh, sehingga pembersihan sinkron dengan tekanan siege.
+
+	\item \texttt{findBestEnemyPaint(...)}:
+	Helper pencari tile enemy paint bernilai tertinggi berbasis jarak dari posisi unit.
+
+	\item \texttt{findBestAllySoldier(...)}:
+	Helper memilih soldier ally paling dekat ke target musuh untuk dikawal, memperkuat frontliner utama.
+
+	\item \texttt{initialize(...)}:
+	Inisialisasi spawn, tracker simetri, target-target lawan, dan indeks target awal Mopper.
+
+	\item \texttt{refreshEnemyTargets()}:
+	Fungsi yang memperbarui array target lawan dari modul simetri.
+\end{enumerate}
+
+\subsubsection{5. TowerBot}
+\begin{enumerate}
+	\item \texttt{turn()}:
+	Prosedur yang memulai tower per ronde: baca pesan, register tower, update simetri dan target, broadcast enemy tower bila terlihat, serang musuh, upgrade jika layak, broadcast identitas tower awal, lalu spawn unit.
+
+	\item \texttt{attackEnemies(...)}:
+	Fungsi pemilihan target tembak tower berbasis skor multi-kriteria: jenis unit musuh (tower/soldier/lain), jarak, status paint tile, dan hp target.
+
+	\item \texttt{upgradeIfPossible(...)}:
+	Prosedur upgrade level tower dengan syarat chips, ronde, dan jumlah tower agar upgrade tidak mengorbankan tempo spawn terlalu awal.
+
+	\item \texttt{spawnUnits(...)}:
+	Prosedur utama produksi unit yang menangani kondisi darurat (spawn mopper anti-soldier dekat), mengirim request mopper, memilih tipe unit, mencoba spawn terbaik, dan fallback spawn legal apa pun.
+
+	\item \texttt{chooseUnitType(...)}:
+	Fungsi kebijakan komposisi unit berbasis fase permainan dan tingkat ancaman. Mengatur rasio soldier/splasher/mopper agar konsisten dengan strategi offensive greedy.
+
+	\item \texttt{isEconomyPhaseDone(...)}:
+	Penentu transisi dari mode ekonomi ke mode combat-centric.
+
+	\item \texttt{tryBestSpawn(...)}:
+	Fungsi scoring lokasi spawn dengan menilai setiap lokasi berdasarkan jarak ke target, bias kontrol tengah map, anti-cluster ally, dan status paint tile.
+
+	\item \texttt{trySpawnInDirection(...)}:
+	Spawner darurat terarah ke ancaman atau target tertentu dengan penalti bila lokasi berada dalam jangkauan tower musuh.
+
+	\item \texttt{findEnemyTower(...)}:
+	Helper deteksi tower musuh di sekitar tower ally.
+
+	\item \texttt{findNearestEnemySoldier(...)}:
+	Helper deteksi soldier musuh terdekat sebagai pemicu defense spawn.
+
+	\item \texttt{sendMopperRequest(...)}:
+	Prosedur yang mengangkat sinyal kebutuhan Mopper ketika enemy paint di sekitar tower melebihi ambang tertentu.
+
+	\item \texttt{sendTowerInfo(...)}:
+	Mengirim hint tower musuh ke unit yang baru di-spawn untuk mempercepat sinkronisasi target serang.
+
+	\item \texttt{initialize(...)}:
+	Inisialisasi daftar lokasi spawn legal dan target lawan awal berdasarkan simetri.
+\end{enumerate}
+
+\subsubsection{6. Nav}
+\begin{enumerate}
+	\item \texttt{recordPosition(...)}:
+	Fungsi yang mencatat posisi terakhir ke buffer histori untuk analisis osilasi.
+
+	\item \texttt{wasRecentlyHere(...)}:
+	Fungsi yang mendeteksi apakah kandidat posisi baru baru saja dikunjungi.
+
+	\item \texttt{fuzzyMove(target)} dan \texttt{fuzzyMove(direction)}:
+	Prosedur gerak berbasis greedyStep, baik menuju target absolut maupun arah relatif.
+
+	\item \texttt{safeFuzzyMove(...)}:
+	Varian fuzzyMove yang menghindari tile dalam jangkauan tower musuh.
+
+	\item \texttt{aggressiveMove(...)}:
+	Gerak ofensif cepat dengan mencoba urutan arah fuzzy dari arah langsung; jika gagal total maka fallback bug nav.
+
+	\item \texttt{bugNav(...)}:
+	Navigasi mengikuti kontur rintangan sampai jalur menuju target terbuka lagi. Memiliki reset state saat target berubah, deteksi stuck, dan pembalikan arah putar jika macet lama.
+
+	\item \texttt{moveIntoRange(...)}:
+	Mencoba bergerak agar tetap berada dalam batas range tertentu ke target. Jika tidak mungkin, fallback ke greedy normal.
+
+	\item \texttt{greedyStep(...)}:
+	Mesin skor inti navigasi. Mengevaluasi arah kandidat dari progres jarak, skor tile, penalti revisiting/osilasi, konsistensi arah sebelumnya, serta constraint keamanan/range.
+
+	\item \texttt{scoreTile(...)}:
+	Memberi nilai lokal pada tile berdasarkan paint, wall, bias teritorial, dan kepadatan ally dekat tile.
+
+	\item \texttt{territorialBias(...)}:
+	Komponen skor tambahan yang mendorong kontrol area tengah peta dan pergerakan maju.
+
+	\item \texttt{twoStepOscillation(...)}:
+	Fungsi yang mendeteksi pola bolak-balik dua langkah.
+
+	\item \texttt{isOscillating()}:
+	Fungsi yang mendeteksi osilasi periodik yang lebih umum (pola A-B-A-B).
+
+	\item \texttt{inEnemyTowerRange(...)}:
+	Fungsi yang mengecek apakah lokasi kandidat berada pada radius serang tower musuh.
+
+	\item \texttt{nearestEnemyTower(...)}:
+	Helper mengambil tower musuh terdekat dari posisi saat ini.
+
+	\item \texttt{fuzzyOrder(...)}:
+	Membangun urutan prioritas arah (direct, slight turn, wider turn) untuk pencarian gerak cepat.
+\end{enumerate}
+
+\subsubsection{7. Messaging}
+\begin{enumerate}
+	\item \texttt{init()}:
+	Reset state komunikasi global lokal robot (tower known, hint musuh, request mopper).
+
+	\item \texttt{encode(...)}:
+	Bit-packing pesan 32-bit berisikan kode, koordinat, payload.
+
+	\item \texttt{encodeTowerBuilt(...)}, \texttt{encodeNeedMopper(...)}, \texttt{encodeEnemyTower(...)}:
+	Pembungkus encode untuk tiga tipe pesan taktis utama.
+
+	\item \texttt{readMessages()}:
+	Parser pesan masuk, memetakan raw bits ke aksi pembaruan state komunikasi.
+
+	\item \texttt{registerEnemyTower(...)}:
+	Prosedur penyimpanan hint tower musuh dan ronde kemunculannya.
+
+	\item \texttt{enemyTowerHint()}:
+	Prosedur yang memberikan hint tower musuh bila masih fresh (belum kedaluwarsa waktu).
+
+	\item \texttt{registerTower(...)}:
+	Prosedur memperbarui catatan tower ally pada basis data lokal.
+
+	\item \texttt{removeTower(...)}:
+	Prosedur menghapus tower dari basis data lokal dengan teknik swap-with-last.
+
+	\item \texttt{nearestPaintTower(...)} dan \texttt{nearestAnyTower(...)}:
+	Query greedy terhadap basis data tower untuk kebutuhan refill atau navigasi balik.
+
+	\item \texttt{countPaintTowers()}, \texttt{countMoneyTowers()}, \texttt{countDefenseTowers()}:
+	Fungsi agregasi jumlah tower per tipe untuk kebijakan fase ekonomi dan komposisi aksi.
+
+	\item \texttt{payloadToType(...)}:
+	Decoder payload integer menjadi tipe tower dasar.
+
+	\item \texttt{relayToNearbyTower(...)}:
+	Prosedur replikasi data tower yang diketahui ke tower ally terdekat demi konsistensi informasi tim.
+\end{enumerate}
+
+\subsubsection{8. SymmetryTracker}
+\begin{enumerate}
+	\item \texttt{init(...)}:
+	Inisialisasi origin referensi simetri dari lokasi asal ally.
+
+	\item \texttt{observe(...)}:
+	Prosedur yang mengumpulkan evidensi simetri dari perbandingan pasangan tile mirror serta mengeliminasi hipotesis simetri yang kontradiktif.
+
+	\item \texttt{targetForSlot(...)}:
+	Prosedur yang menghasilkan target lawan berdasarkan urutan simetri terbaik plus offset spread seed sehingga unit berbeda tidak menumpuk pada target sama.
+
+	\item \texttt{bestSymmetry()}:
+	Fungsi yang memilij indeks simetri dengan evidensi tertinggi dari hipotesis yang masih mungkin.
+
+	\item \texttt{orderedSymmetry(...)}:
+	Fungsi yang menyusun prioritas tiga simetri (utama-sekunder-lain) dan merotasinya dengan seed untuk distribusi peran unit.
+
+	\item \texttt{contains(...)}:
+	Helper untuk cek keanggotaan nilai pada array pendek.
+
+	\item \texttt{mirror(...)}:
+	Transformasi koordinat terhadap simetri sumbu-X, sumbu-Y, atau rotasional.
+\end{enumerate}
 
 \section{Implementasi Greedy 3 (Aufar)}
