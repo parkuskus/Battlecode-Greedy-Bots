@@ -1,18 +1,24 @@
-package kevin_bot_1;
+package alternative_bots_2;
 
-import battlecode.common.*;
+import battlecode.common.Direction;
+import battlecode.common.GameActionException;
+import battlecode.common.MapInfo;
+import battlecode.common.MapLocation;
+import battlecode.common.PaintType;
+import battlecode.common.RobotController;
+import battlecode.common.RobotInfo;
 
-/**
- * Navigation helpers shared by all mobile units.
- *
- * Uses BugNav with a greedy tile-score heuristic:
- *   score(tile) = +2 ally paint, 0 empty, -2 enemy paint, -100 in tower range
- * Movement always tries the highest-scoring reachable neighbor
- * in the fuzzy-direction cone toward the target.
+/*
+  Navigation helpers — coverage-aware movement for all mobile units.
+ 
+  Tile scoring prioritizes EMPTY tiles highly (+5) to maximize fresh coverage,
+  rewards enemy paint flipping (+3), and slightly rewards ally paint (+1).
+  BugNav with wall-following for pathfinding around obstacles.
  */
 public class Nav {
 
-    /* ---- fuzzy move toward a location ---- */
+    // Fuzzy Move (direction-cone with tile scoring) 
+
     static boolean fuzzyMove(MapLocation target) throws GameActionException {
         RobotController rc = RobotPlayer.rc;
         if (!rc.isMovementReady()) return false;
@@ -30,10 +36,7 @@ public class Nav {
         for (Direction d : tries) {
             if (rc.canMove(d)) {
                 int s = tileScore(rc.getLocation().add(d));
-                if (s > bestScore) {
-                    bestScore = s;
-                    best = d;
-                }
+                if (s > bestScore) { bestScore = s; best = d; }
             }
         }
         if (best != null && bestScore > -50) {
@@ -43,7 +46,8 @@ public class Nav {
         return false;
     }
 
-    /* ---- safe fuzzy: additionally avoid enemy tower ranges ---- */
+    // Safe Fuzzy Move (avoids enemy tower ranges)
+
     static boolean safeFuzzyMove(MapLocation target, RobotInfo[] enemies) throws GameActionException {
         RobotController rc = RobotPlayer.rc;
         if (!rc.isMovementReady()) return false;
@@ -55,10 +59,7 @@ public class Nav {
             MapLocation next = rc.getLocation().add(d);
             if (rc.canMove(d) && !inEnemyTowerRange(next, enemies)) {
                 int s = tileScore(next);
-                if (s > bestScore) {
-                    bestScore = s;
-                    best = d;
-                }
+                if (s > bestScore) { bestScore = s; best = d; }
             }
         }
         if (best != null) {
@@ -68,18 +69,18 @@ public class Nav {
         return false;
     }
 
-    /* ---- BugNav (wall-following with tile scoring) ---- */
+    // BugNav (wall-following with tile scoring)
+
     private static Direction[] bugStack = new Direction[80];
     private static int bugIdx = 0;
     private static MapLocation bugTarget = null;
     private static boolean bugRight = true;
-    private static MapLocation bugLastLoc = null;
 
     static void bugNav(MapLocation target) throws GameActionException {
         RobotController rc = RobotPlayer.rc;
         if (!rc.isMovementReady()) return;
 
-        // reset if target changed significantly
+        // reset if target changed significantly or stack overflow
         if (bugTarget == null || bugTarget.distanceSquaredTo(target) > 8 || bugIdx >= 70) {
             bugStack = new Direction[80];
             bugIdx = 0;
@@ -92,7 +93,7 @@ public class Nav {
             bugIdx--;
         }
 
-        // direct movement
+        // direct movement with scoring
         if (bugIdx == 0) {
             Direction d = rc.getLocation().directionTo(target);
             Direction best = null;
@@ -100,15 +101,10 @@ public class Nav {
             for (Direction try_ : new Direction[]{d, d.rotateLeft(), d.rotateRight()}) {
                 if (rc.canMove(try_)) {
                     int s = tileScore(rc.getLocation().add(try_));
-                    if (s > bestScore) {
-                        bestScore = s;
-                        best = try_;
-                    }
+                    if (s > bestScore) { bestScore = s; best = try_; }
                 }
             }
             if (best != null && bestScore > -50) {
-                MapLocation prev = bugLastLoc;
-                bugLastLoc = rc.getLocation();
                 rc.move(best);
                 return;
             }
@@ -122,7 +118,6 @@ public class Nav {
             : bugStack[bugIdx - 1].rotateLeft();
         for (int i = 0; i < 8; i++) {
             if (rc.canMove(dir)) {
-                bugLastLoc = rc.getLocation();
                 rc.move(dir);
                 return;
             }
@@ -137,21 +132,43 @@ public class Nav {
         }
     }
 
-    /* ---- tile scoring ---- */
+    // Coverage-Aware Tile Scoring
+    // EMPTY tiles scored highest (+6) to maximize fresh paint coverage.
+    // Enemy paint scored +4 (valuable to flip). Ally paint +1 (safe but no coverage gain).
+
     static int tileScore(MapLocation loc) throws GameActionException {
         RobotController rc = RobotPlayer.rc;
         if (!rc.onTheMap(loc)) return -9999;
         MapInfo info = rc.senseMapInfo(loc);
         if (info.isWall()) return -9999;
-        int score = 0;
         PaintType p = info.getPaint();
-        if (p.isAlly()) score += 2;
-        else if (p.isEnemy()) score -= 2;
-        // else empty: 0
-        return score;
+        if (p == PaintType.EMPTY) return 6;
+        if (p.isEnemy()) return 4;
+        if (p.isAlly()) return 1;
+        return 0;
     }
 
-    /* ---- helpers ---- */
+    // Move Into Range
+
+    static boolean moveIntoRange(MapLocation target, int rangeSq) throws GameActionException {
+        RobotController rc = RobotPlayer.rc;
+        if (!rc.isMovementReady()) return false;
+        Direction dir = rc.getLocation().directionTo(target);
+        Direction best = null;
+        int bestScore = -9999;
+        for (Direction d : fuzzyOrder(dir)) {
+            MapLocation next = rc.getLocation().add(d);
+            if (rc.canMove(d) && next.distanceSquaredTo(target) <= rangeSq) {
+                int s = tileScore(next);
+                if (s > bestScore) { bestScore = s; best = d; }
+            }
+        }
+        if (best != null) { rc.move(best); return true; }
+        return rc.getLocation().distanceSquaredTo(target) <= rangeSq;
+    }
+
+    // Helpers
+
     static boolean inEnemyTowerRange(MapLocation loc, RobotInfo[] enemies) {
         for (RobotInfo e : enemies) {
             if (e.type.isTowerType()
@@ -185,21 +202,15 @@ public class Nav {
         };
     }
 
-    /** Move into attack range of target, preferring best scored tile. */
-    static boolean moveIntoRange(MapLocation target, int rangeSq) throws GameActionException {
-        RobotController rc = RobotPlayer.rc;
-        if (!rc.isMovementReady()) return false;
-        Direction dir = rc.getLocation().directionTo(target);
-        Direction best = null;
-        int bestScore = -9999;
-        for (Direction d : fuzzyOrder(dir)) {
-            MapLocation next = rc.getLocation().add(d);
-            if (rc.canMove(d) && next.distanceSquaredTo(target) <= rangeSq) {
-                int s = tileScore(next);
-                if (s > bestScore) { bestScore = s; best = d; }
-            }
+    /** Extend a location in a direction until reaching the map edge. */
+    static MapLocation extendToEdge(MapLocation from, Direction dir) {
+        MapLocation loc = from;
+        for (int i = 0; i < 60; i++) {
+            MapLocation next = loc.add(dir);
+            if (next.x < 0 || next.y < 0
+                || next.x >= RobotPlayer.mapW || next.y >= RobotPlayer.mapH) break;
+            loc = next;
         }
-        if (best != null) { rc.move(best); return true; }
-        return rc.getLocation().distanceSquaredTo(target) <= rangeSq;
+        return loc;
     }
 }
