@@ -29,6 +29,29 @@
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 
+% Breakable IEEE-like algorithm environment:
+% keeps Algorithm numbering/caption style but allows page breaks.
+\makeatletter
+\newenvironment{breakablealgorithm}
+{%
+  \par\addvspace{8pt}
+  \refstepcounter{algorithm}%
+  \hrule height 0.8pt depth 0pt \kern 2pt%
+  \renewcommand{\caption}[2][\relax]{%
+    {\raggedright\textbf{\ALG@name~\thealgorithm} ##2\par}%
+    \ifx\relax##1\relax
+      \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##2}%
+    \else
+      \addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##1}%
+    \fi
+    \kern 2pt\hrule\kern 2pt
+  }%
+}
+{%
+  \kern 2pt\hrule\par\addvspace{8pt}
+}
+\makeatother
+
 \usepackage[a4paper,top=3cm,bottom=3cm,left=3cm,right=3cm,headheight=60pt,headsep=15pt,footskip=28pt]{geometry}
 
 % Semua gambar dari folder public dan subfoldernya
@@ -83,42 +106,42 @@
 \begin{document}
 
 \begin{titlepage}
-  \thispagestyle{empty}
-  \centering
+	\thispagestyle{empty}
+	\centering
 
-  % ---------- Judul utama ----------
-  {\LARGE \textbf{Tugas Besar 1}\par}
-  \vspace{0.2cm}
-  {\LARGE \textbf{Jambi X Bekasi}\par}
-  \vspace{0.8cm}
-  {\large IF2211 Strategi Algoritma\par}
-  \vspace{0.2cm}
-  {\large \textit{Battlecode Conqueror} : Pembuatan Bot 'Penakluk' Permainan \textit{Battlecode} Berbasis Algoritma Greedy \par}
-  \vspace{0.2cm}
-  {\large Semester 2 Tahun 2025/2026\par}
+	% ---------- Judul utama ----------
+	{\LARGE \textbf{Tugas Besar 1}\par}
+	\vspace{0.2cm}
+	{\LARGE \textbf{Jambi X Bekasi}\par}
+	\vspace{0.8cm}
+	{\large IF2211 Strategi Algoritma\par}
+	\vspace{0.2cm}
+	{\large \textit{Battlecode Conqueror} : Pembuatan Bot 'Penakluk' Permainan \textit{Battlecode} Berbasis Algoritma Greedy \par}
+	\vspace{0.2cm}
+	{\large Semester 2 Tahun 2025/2026\par}
 
-  % ---------- Gambar tengah ----------
-  \vspace{1.8cm}
-  \includegraphics[width=0.9\textwidth]{foto-kelompok-new.png}\par
+	% ---------- Gambar tengah ----------
+	\vspace{1.8cm}
+	\includegraphics[width=0.9\textwidth]{foto-kelompok-new.png}\par
 
-  % ---------- Disusun oleh ----------
-  \vspace{1.2cm}
-  {\bfseries Disusun oleh:\par}
-  \vspace{0.2cm}
-  \textbf{Jambi X Bekasi}
-  \vspace{0.5cm} \\
-  \begin{tabular}{l l}
-    Kevin Wirya Valerian        & (13524019) \\
-    Muhammad Aufar Rizqi Kusuma & (13524061) \\
-    Athilla Zaidan Zidna Fann   & (13524068) \\
-  \end{tabular}
+	% ---------- Disusun oleh ----------
+	\vspace{1.2cm}
+	{\bfseries Disusun oleh:\par}
+	\vspace{0.2cm}
+	\textbf{Jambi X Bekasi}
+	\vspace{0.5cm} \\
+	\begin{tabular}{l l}
+		Kevin Wirya Valerian        & (13524019) \\
+		Muhammad Aufar Rizqi Kusuma & (13524061) \\
+		Athilla Zaidan Zidna Fann   & (13524068) \\
+	\end{tabular}
 
-  % ---------- Institusi ----------
-  \vspace{2.0cm}
-  Laboratorium Ilmu dan Rekayasa Komputasi\par
-  Program Studi Teknik Informatika\par
-  Sekolah Teknik Elektro dan Informatika\par
-  Institut Teknologi Bandung\par
+	% ---------- Institusi ----------
+	\vspace{2.0cm}
+	Laboratorium Ilmu dan Rekayasa Komputasi\par
+	Program Studi Teknik Informatika\par
+	Sekolah Teknik Elektro dan Informatika\par
+	Institut Teknologi Bandung\par
 
 \end{titlepage}
 
