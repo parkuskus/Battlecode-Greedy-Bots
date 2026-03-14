@@ -330,10 +330,19 @@ task listPlayers {
     sourceSets.main.allSource.each {
       logger.debug(it.name)
       if (it.getName().equals('RobotPlayer.java') || it.getName().equals('RobotPlayer.scala')) {
-        URI base = new File(project.projectDir, 'src').toURI()
-        URI full = it.toURI()
-        String path = base.relativize(full).toString()
-        logger.quiet(path.substring(0, path.lastIndexOf('/')).replaceAll('/', '.'))
+        String pkg = null
+        it.eachLine { ln ->
+          def m = (ln =~ /^\s*package\s+([A-Za-z_][A-Za-z0-9_\.]*)\s*[;]?\s*$/)
+          if (m.matches()) pkg = m[0][1]
+        }
+        if (pkg != null) {
+          logger.quiet(pkg)
+        } else {
+          URI base = new File(project.projectDir, 'src').toURI()
+          URI full = it.toURI()
+          String path = base.relativize(full).toString()
+          logger.quiet(path.substring(0, path.lastIndexOf('/')).replaceAll('/', '.').replaceAll('-', '_'))
+        }
       }
     }
   }
@@ -371,3 +380,4 @@ task zipForSubmit(type: Zip) {
   destinationDirectory = project.projectDir
   from sourceSets.main.allSource
 }
+

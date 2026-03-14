@@ -230,3 +230,4 @@ docs/**/*.toc
 =======
 docs/**/*.toc
 specs-desc.md
+*.pdf
