@@ -1,11 +1,18 @@
-package alternative_bots_1;
+package alternative_bots_2;
+
 import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.RobotController;
 import battlecode.common.Team;
 
+/**
+ * Architecture: modular per-unit controllers with shared navigation & comms.
+ * Strategy: aggressive map exploration with coverage-first decision making.
+ * Win condition target: maximize paint coverage for round-2000 tiebreak.
+ */
 public class RobotPlayer {
+
     static RobotController rc;
     static Team myTeam;
     static Team enemyTeam;
@@ -26,17 +33,19 @@ public class RobotPlayer {
         mapH = rc.getMapHeight();
         myID = rc.getID();
 
-        Messaging.init();
+        Comms.init();
 
         while (true) {
             try {
                 switch (rc.getType()) {
-                    case SOLDIER -> SoldierBot.turn();
+                    case SOLDIER  -> SoldierBot.turn();
                     case SPLASHER -> SplasherBot.turn();
-                    case MOPPER -> MopperBot.turn();
-                    default -> TowerBot.turn();
+                    case MOPPER   -> MopperBot.turn();
+                    default       -> TowerBot.turn();
                 }
-            } catch (Exception e) {
+            } catch (GameActionException e) {
+                e.printStackTrace();
+            } catch (RuntimeException e) {
                 e.printStackTrace();
             } finally {
                 Clock.yield();
