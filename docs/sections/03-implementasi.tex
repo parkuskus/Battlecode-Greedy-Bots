@@ -188,7 +188,6 @@ Untuk \texttt{alternative\_bots\_1}, eksplorasi dilakukan pada dua algoritma gre
 \subsection{Analisis Efisiensi}
 
 \subsubsection{Efisiensi Komputasi per Komponen}
-
 \begin{longtable}{>{\raggedright\arraybackslash}p{0.2\textwidth} >{\raggedright\arraybackslash}p{0.3\textwidth} >{\raggedright\arraybackslash}p{0.44\textwidth}}
     \toprule
     \textbf{Komponen} & \textbf{Beban Komputasi}                                        & \textbf{Implikasi Efisiensi}                                                                                                                     \\
@@ -196,10 +195,10 @@ Untuk \texttt{alternative\_bots\_1}, eksplorasi dilakukan pada dua algoritma gre
     \endhead
     Soldier           & Scan ruin, enemy, tile sekitar, cek status transisi             & Tetap lokal; cocok untuk bytecode terbatas, terutama karena ada prioritas status sehingga search space dipangkas.                                \\
     Splasher          & Evaluasi beberapa kandidat titik splash dan tile sekitarnya     & Beban tertinggi di unit tempur; tetap feasible karena radius kandidat terbatas action radius dan ada \textit{early break} saat bytecode menipis. \\
-    Mopper            & Scoring enemy paint, enemy unit, dan transfer paint             & Beban menengah dengan keuntungan tinggi karena tindakan pembersihan langsung meningkatkan kualitas front untuk unit offense lain.                \\
-    Tower spawn       & Evaluasi tipe spawn, lokasi spawn, dan kondisi ancaman          & Ringan-menengah; keputusan periodik, bukan search global.                                                                                        \\
-    Navigasi          & Penilaian hingga 8 arah per langkah, anti-osilasi, safety check & Sangat efisien dibanding pathfinding global; bug fallback menghindari kebuntuan berkepanjangan.                                                  \\
-    Messaging         & Read/encode/decode pesan ringkas 32-bit                         & Overhead rendah; nilai koordinasi tinggi.                                                                                                        \\
+    Mopper            & Scoring enemy paint, enemy unit, dan transfer paint             & Beban menengah dengan keuntungan tinggi karena tindakan pembersihan langsung meningkatkan kualitas front untuk unit offense lain. \\
+    Tower spawn       & Evaluasi tipe spawn, lokasi spawn, dan kondisi ancaman          & Ringan-menengah; keputusan periodik, bukan search global. \\
+    Navigasi          & Penilaian hingga 8 arah per langkah, anti-osilasi, safety check & Sangat efisien dibanding pathfinding global; bug fallback menghindari kebuntuan berkepanjangan. \\
+    Messaging         & Read/encode/decode pesan ringkas 32-bit                         & Overhead rendah; nilai koordinasi tinggi.\\
     \bottomrule
 \end{longtable}
 

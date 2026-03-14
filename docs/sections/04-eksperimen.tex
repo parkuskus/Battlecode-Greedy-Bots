@@ -500,6 +500,8 @@ Bagian ini menjelaskan struktur data pada level konsep, tipe, lokasi pemakaian, 
 	      Transformasi koordinat terhadap simetri sumbu-X, sumbu-Y, atau rotasional.
 \end{enumerate}
 
+
+
 \section{Implementasi Greedy Bot Alternatif 2 (Aufar)}
 
 \subsection{Pseudocode}
@@ -765,3 +767,65 @@ Bagian ini menjelaskan struktur data pada level konsep, tipe, lokasi pemakaian, 
 	\item \texttt{relayToNearbyTower(...)} dan \texttt{towerRelayToUnits(...)}:
 	      Mekanisme distribusi informasi tower antar-unit agar keputusan lokal tetap sinkron di tingkat tim.
 \end{enumerate}
+
+\newpage
+\section{Analisis Pengujian}
+\subsection{Battle 1: Main Bot vs Bot Alternatif 1 - DefaultSmall}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.65\textwidth]{public/altbot-111.png}
+    \caption{Visualisasi Battle 1 pada 100 Ronde Pertama}
+    \label{fig:main-bot}
+\end{figure}
+
+Dari pengamatan, dapat dilihat bahwa di awal baik bot utama dan bot alternatif sama-sama dapat menutupi area dengan persentase luas yang kurang lebih sama. Namun, pada ronde ke-10, terlihat bahwa bot utama mulai melampaui area yan ditutupi oleh bot alternatif. Hal ini dikarenakan lebih banyak unit yang dikeluarkan oleh bot utama. Sementara itu, bot alternatif tidak melakukan greedy pada ekonomi dan memiliki manajemen chips yang kurang. Hal ini membuat bot utama dapat memberikan \textit{snowball effect} kepada bot alternatif. Dalam waktu yang singkat, pada sekitar ronde ke-90, bot utama berhasil \textit{keep up} dengan chips yang dimiliki oleh bot alternatif. Dengan adanya \textit{pay-off} yang terkalkulasi ini, bot utama dapat terus-terusan berkembang sambil menggunakan ekonomi dengan baik. Di sisi lain, bot alternatif memiliki chips yang terus-terusan meningkat, tetapi tidak digunakan secara rakus untuk beradaptasi dengan kepungan warna dari bot utama. 
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.65\textwidth]{public/altbot-112.png}
+    \caption{Visualisasi Battle 1 pada Akhir Permainan}
+    \label{fig:alt-bot-1}
+\end{figure}
+
+Pada akhirnya, terlihat bahwa dalam sekitar 350 ronde, bot utama berhasil menutupi lebih dari 70\% area. Bagian map yang telah diwarnai oleh bot utama meningkat dari waktu ke waktu secara perlahan-lahan. Bot alternatif yang berfokus pada strategi \textit{offensive greedy} tidak mempertimbangkan pertahanan yang ia miliki. Hal ini menyebabkan mulai pada ronde ke-200, area yang ditutupi oleh warna bot alternatif berkurang drastis akibat mopper maupun splasher yang dimiliki oleh bot utama. Bot alternatif yang ofensif tidak mengimplementasikan strateginya secara optimal pada kasus ini sebab manajemen paint sangat boros. Tanpa adanya paint tower yang terlebih dahulu dibangun, hal ini membuat cadangan cat yang dimiliki oleh tower menurun drastis, membuat bot alternatif tidak dapat bergerak ke bagian map yang lebih jauh.
+
+\section{Analisis Pengujian}
+\subsection{Battle 2: Main Bot vs Bot Alternatif 1 - MoneyTower}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.65\textwidth]{public/altbot-121.png}
+    \caption{Visualisasi Battle 2 pada 800 Ronde Pertama}
+    \label{fig:main-bot}
+\end{figure}
+
+Map MoneyTower menjadi kasus unik yang dapat diamati. Mayoritas maps dimenangkan oleh bot utama. Namun, khusus pada map ini, bot alternatif menjadi pemenang. Hal ini menjadi salah satu \textit{edge case} yang harus ditinjau untuk meningkatkan performa dari bot utama. Dari statistik yang ada, pada 800 ronde pertama, diketahui bahwa bot utama berhasil untuk memperluas teritorinya dengan sangat baik hingga menekan bot alternatif. Namun, jika dilihat dari manajemen chip, terlihat bahwa chip yang dimiliki oleh bot utama tidak digunakan dengan baik. Chip terus-terusan menumpuk tanpa digunakan dengan optimal, berbeda dengan bot alternatif yang secara rakus mengambil chips untuk melakukan penyerangan dengan memanggil soldier terus-terusan meskipun tower yang dibangun hanya satu money tower dengan level 3.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.65\textwidth]{public/altbot-122.png}
+    \caption{Visualisasi Battle 2 pada Akhir Permainan}
+    \label{fig:alt-bot-1}
+\end{figure}
+
+Pada akhir ronde ke-800, kelompok kami mengamati bahwa soldier yang dikeluarkan melalui bot alternatif berhasil menghancurkan tower yang telah dibangun oleh bot utama. Hal ini membuat bot utama dalam kondisi terpojok. Dari statistik, terlihat bahwa mulai dari ronde tersebut dan ke depannya, cadangan paint yang dimiliki oleh bot utama tak kunjung membaik. Hal ini memberikan kesempatan agar bot alternatif dapat unggul. Bahkan, hingga akhir permainan, bot utama tidak dapat membangun tower sama sekali sehingga pada ronde-ronde terakhir, bot alternatif bisa menyalip teritori yang ditutupi oleh bot utama sehingga memberikan bot alternatif kemenangan dengan selisih tipis. Kesalahan kecil yang dilakukan bot utama membuatnya tidak optimal saat melawan robot dengan kondisi tertentu. Di sisi lain, dapat dikatakan bahwa bot alternatif sebenarnya menang \textit{by luck} karena sebenarnya bot utama telah menutupi teritorinya lebih banyak dari awal permainan. Strategi ofensif yang ditanamkan pada bot alternatif membuatnya mengantisipasi perkembangan lebih luas dari teritori bot utama. Hal ini diperkuat dengan bot alternatif yang memanggil mopper mulai di akhir permainan.
+
+\subsection{Battle 3: Main Bot vs Bot Alternatif 1 - DefaultHuge}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.65\textwidth]{public/altbot-131.png}
+    \caption{Visualisasi Battle 3 pada 200 Ronde Pertama}
+    \label{fig:main-bot}
+\end{figure}
+
+Pada kasus map yang sangat luas, kelompok kami menganalisis bahwa bot alternatif masih bisa mengungguli dalam segi chips dari bot utama pada 80 ronde pertama karena jarak mereka yang berjauhan. Namun, tetap saja algoritma yang dimiliki oleh bot utama mempercepat \textit{area coverage} bot tersebut. Hal ini membuat pada fase \textit{early game}, bot utama tetap lebih unggul pada komponen lainnya, seperti paint dan luas teritori. Perlu diperhatikan bahwa pada 200 ronde pertama, bot utama masih tidak secara rakus menggunakan chips yang dimiliki. Bot utama berusaha mencadangkan chips yang mereka miliki untuk fase setelahnya.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.65\textwidth]{public/altbot-132.png}
+    \caption{Visualisasi Battle 3 pada Akhir Permainan}
+    \label{fig:alt-bot-1}
+\end{figure}
+
+Banyak sekali hal yang dapat dianalisis dari hasil akhir pertandingan ketiga ini, kita bisa melihat bahwa akibat dari map yang sangat luas, bot utama dan bot alternatif tidak mengalami penurunan luas teritori yang signifikan. Namun, map yang luas ini juga menekan bot alternatif dari sisi greedy ofensifnya karena serangan yang dilancarkan sangat sulit untuk sampai ke tower-tower yang dimiliki oleh bot utama. Bot alternatif kebingungan untuk menggunakan chipsnya sehingga menyebabkan penumpukan chips hingga akhir permainan. Kemampuan ekspansi yang menjadi poin krusial dari bot utama membuatnya dapat mencapai objektif permainan dengan lebih optimal. Bot utama berhasil memanggil berbagai tipe robots di akhir permainan, mulai dari soldier, splasher, dan mopper dengan kuantitas lebih dari 20. Sementara itu, algoritma greedy pada bot alternatif yang selalu melakukan \textit{spam} pada robot bertipe soldier membuatnya rentan diserang terus-terusan saat dikepung oleh robot yang dihasilkan bot utama. Objektif yang terus dihalangi ini membuat bot alternatif menjadi stagnan.
+
+
