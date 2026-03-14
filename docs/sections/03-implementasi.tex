@@ -131,6 +131,131 @@ Fungsi objektif dalam strategi greedy Battlecode 2025 adalah fungsi yang digunak
           Selain menyerang lawan, objektif kita tentunya menjaga agar jumlah robot dan menara sekutu tetap tinggi dengan cara menjaga cadangan cat agar tidak berada di bawah 50\% (untuk menghindari penalti \textit{cooldown}) dan memastikan HP unit tidak mencapai nol.
 \end{itemize}
 
+\section{Strategi Greedy Main Bot: \textit{scoring-based nearest-target}}
+
+Strategi \texttt{main\_bot} dibangun dengan paradigma \textit{scoring-based nearest-target greedy}, yaitu setiap unit memilih aksi lokal dengan skor langsung terbaik terhadap kondisi di sekitarnya, tetapi tetap menjaga kesinambungan ekonomi, jaringan refill, dan pembangunan infrastruktur. Berbeda dengan bot yang terlalu ofensif, \texttt{main\_bot} menempatkan pembangunan tower dan stabilitas paint sebagai fondasi, lalu mengubah keunggulan tersebut menjadi coverage dan tekanan taktis ke tower musuh.
+
+\subsection{Prinsip-Prinsip}    
+
+\subsubsection{Soldier}
+
+Soldier menggunakan status \texttt{EXPLORE}, \texttt{REFILL}, \texttt{COMBAT}, \texttt{BUILD\_TOWER}, dan \texttt{BUILD\_SRP}. Sifat greedy-nya terlihat pada urutan keputusan berikut.
+
+\begin{enumerate}
+    \item Jika paint sangat rendah dan ada tower refill yang masih layak dijangkau, masuk \texttt{REFILL}.
+    \item Jika tower musuh terlihat dan kondisi HP serta paint aman, masuk \texttt{COMBAT} untuk memberi tekanan langsung.
+    \item Jika ada ruin dengan progres terbaik, prioritaskan \texttt{BUILD\_TOWER} agar jaringan tower bertambah secepat mungkin.
+    \item Jika jumlah tower sudah memadai, ada paint tower, area aman, dan chips cukup, lanjutkan \texttt{BUILD\_SRP}.
+    \item Selain kondisi di atas, masuk \texttt{EXPLORE} untuk memperluas frontier coverage dan mengecat tile kosong terdekat.
+\end{enumerate}
+
+Implementasi Soldier juga memakai \textit{mark-based painting}, sehingga pola tower dan SRP tidak dicat berdasarkan array keras saat eksekusi aksi, melainkan mengikuti \textit{mark} pada peta. Dengan ini, setiap serangan pewarnaan tetap greedy secara lokal tetapi konsisten terhadap pola yang sedang dibangun.
+
+\subsubsection{Splasher}
+
+Splasher pada \texttt{main\_bot} berfungsi sebagai akselerator coverage area, bukan unit penghancur tower utama. Splasher hanya memiliki dua status, yaitu \texttt{EXPLORE} dan \texttt{REFILL}. Ketika paint cukup, Splasher bergerak ke klaster tile yang masih bisa dikonversi, lalu menghitung target splash terbaik berdasarkan jumlah tile kosong dan enemy paint yang bisa diubah.
+
+Heuristik splash juga dibuat aman: target yang berpotensi mengenai tower musuh dihindari, karena peran serang tower memang diserahkan kepada Soldier. Dengan demikian, Splasher menjaga efisiensi paint dan fokus pada perluasan area yang bernilai tinggi.
+
+\subsubsection{Mopper}
+
+Mopper berperan sebagai unit support yang menjaga kualitas frontline. Urutan greedy Mopper adalah mengisi ulang paint bila kritis, melakukan \textit{mop swing} jika potensi hit banyak, menyerang robot musuh non-tower yang berada sangat dekat, lalu membersihkan enemy paint di tanah.
+
+Sesudah aksi utama, Mopper melakukan \textit{paint transfer} ke ally yang paint-nya rendah dan bergerak mengikuti konteks lokal: mengejar musuh dekat jika aman, merespons sinyal \texttt{needMopperAt}, mengikuti Soldier terdekat sebagai pendukung, atau patroli ke frontier. Dengan cara ini, Mopper menjaga agar ekspansi Soldier dan Splasher tidak mudah diputus oleh enemy paint.
+
+\subsubsection{Tower}
+
+Tower menerapkan spawn greedy berbasis fase ronde sekaligus kondisi sekitar.
+\begin{enumerate}
+    \item Early: dominan \textit{Soldier} dengan sisipan \textit{Mopper} untuk mempercepat pembangunan ruin dan stabilitas paint awal.
+    \item Mid: komposisi seimbang \textit{Soldier-Splasher-Mopper} agar coverage dan kontrol area berkembang bersamaan.
+    \item Late: dominan \textit{Splasher} untuk mempercepat konversi area dan mengunci keunggulan coverage.
+\end{enumerate}
+
+Di luar spawn, Tower juga menyerang target dengan prioritas Soldier musuh lebih dulu, melakukan upgrade secara konservatif saat ekonomi sudah cukup kuat, serta menyalurkan informasi tower kepada unit baru agar keputusan lokal setiap robot langsung memiliki konteks refill dan infrastruktur.
+
+\subsubsection{Navigasi}
+
+Navigasi pada \texttt{main\_bot} menggunakan kombinasi \textit{fuzzy move}, \textit{bug navigation}, dan anti-osilasi berbasis histori posisi. Skor gerak lokal ditentukan oleh:
+\begin{enumerate}
+    \item kualitas tile tujuan (ally paint lebih aman daripada empty, dan enemy paint dipenalti),
+    \item penalti kepadatan ally agar unit tidak menumpuk,
+    \item penalti anti-osilasi agar robot tidak bolak-balik di area yang sama, dan
+    \item keamanan relatif terhadap jangkauan tower musuh.
+\end{enumerate}
+
+Jika gerak langsung menuju target gagal, \texttt{bugNav} mengambil alih. Dengan kombinasi ini, navigasi tetap ringan terhadap bytecode namun cukup stabil untuk mempertahankan tempo ekspansi.
+
+\subsection{Eksplorasi}
+
+Untuk \texttt{main\_bot}, eksplorasi dilakukan pada dua alternatif greedy utama berikut.
+\begin{enumerate}
+    \item Menang melalui \textit{pure tower-first expansion}: Soldier hampir selalu memprioritaskan ruin dan SRP agar ekonomi serta refill tumbuh secepat mungkin. Kelebihannya adalah struktur permainan menjadi sangat stabil, tetapi kelemahannya tempo serang ke lawan bisa terlambat jika peta menuntut tekanan awal.
+    \item Menang melalui \textit{balanced scoring control}: pembangunan tower tetap menjadi fondasi, tetapi Soldier tetap diberi peluang masuk \texttt{COMBAT} saat tower musuh terlihat, Splasher difokuskan pada coverage area, dan Mopper menjaga kestabilan garis depan. Alternatif ini lebih seimbang antara ekspansi, sustain, dan tekanan taktis.
+\end{enumerate}
+
+\subsection{Analisis Efisiensi}
+
+\subsubsection{Efisiensi Komputasi per Komponen}
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.2\textwidth} >{\raggedright\arraybackslash}p{0.3\textwidth} >{\raggedright\arraybackslash}p{0.44\textwidth}}
+    \toprule
+    \textbf{Komponen} & \textbf{Beban Komputasi} & \textbf{Implikasi Efisiensi} \\
+    \midrule
+    \endhead
+    Soldier & Evaluasi state, scoring ruin/SRP, pemilihan target coverage, dan pengecekan mark pattern & Beban menengah-tinggi tetapi tetap lokal; pencarian dipangkas melalui prioritas state sehingga tidak berkembang menjadi search global. \\
+    Splasher & Perhitungan nilai splash pada kandidat lokal dan deteksi klaster tile paintable & Beban menengah; domain evaluasi kecil sehingga tetap feasible sambil memberi gain area yang tinggi per aksi. \\
+    Mopper & Hitung potensi \textit{mop swing}, pilih target musuh dekat, cek transfer paint, dan logika support & Beban menengah-rendah; keputusan sangat lokal dan bernilai tinggi untuk menjaga kualitas frontier. \\
+    Tower spawn & Serang musuh, cek upgrade, pilih tipe spawn per fase, dan pilih lokasi spawn terbaik & Ringan-menengah; keputusan periodik dengan kandidat spawn terbatas radius build. \\
+    Navigasi & Penilaian arah lokal, \textit{safe move}, \textit{bug fallback}, dan histori anti-osilasi & Sangat efisien dibanding pathfinding global; cukup kuat untuk menjaga laju gerak tanpa membebani bytecode. \\
+    Messaging & Registry tower, \textit{relay} informasi, dan pesan 32-bit terkompresi & Overhead rendah; memberi nilai koordinasi tinggi karena robot baru cepat mengetahui jaringan tower yang sudah ada. \\
+    \bottomrule
+\end{longtable}
+
+\subsubsection{Efisiensi Operasional (Paint, Chips, Turn Tempo)}
+
+Dari sisi operasi pertandingan, efisiensi \texttt{main\_bot} terlihat pada rasio hasil terhadap resource yang dikorbankan.
+
+\begin{enumerate}
+    \item \textbf{Paint efficiency}: refill selalu memprioritaskan tower yang relevan, \textit{mark-based painting} mengurangi pewarnaan yang salah pola, dan Splasher hanya menyerang ketika nilai splash cukup baik.
+    \item \textbf{Chip efficiency}: ruin dibangun secara greedy berdasarkan progres terbaik, jenis tower diseimbangkan antara paint, money, dan defense, sedangkan upgrade ditahan sampai ekonomi cukup aman.
+    \item \textbf{Tempo efficiency}: Tower-first expansion membuat jaringan refill cepat terbentuk, lalu koordinasi pesan dan navigasi lokal menjaga agar robot yang baru lahir segera produktif.
+\end{enumerate}
+
+\subsection{Analisis Efektivitas}
+
+\subsubsection{Efektivitas Makro}
+
+\textbf{Fase early}\\
+Pada fase awal, \texttt{main\_bot} cenderung unggul dalam stabilitas. Soldier agresif membangun ruin, Tower lebih sering menghasilkan Soldier, dan Mopper menjaga agar enemy paint tidak mengganggu pembangunan. Hasilnya, coverage awal mungkin tidak seledak strategi rush, tetapi fondasi ekonomi dan refill lebih cepat matang.
+
+\textbf{Fase mid}\\
+Ini merupakan fase terkuat dari strategi ini. Setelah jaringan tower mulai terbentuk, Soldier dapat berganti antara build dan combat secara oportunistik, Splasher mulai mempercepat konversi frontier, dan Mopper menjaga area transisi tetap bersih. Kombinasi ini membuat tekanan coverage dan sustain berjalan bersamaan.
+
+\textbf{Fase late}\\
+Pada fase akhir, komposisi spawn bergeser lebih berat ke Splasher sehingga penutupan area menjadi lebih cepat. Tower yang telah ter-upgrade juga membuat pertahanan wilayah sendiri lebih kokoh, sementara Soldier tetap dapat menyerang tower musuh bila ada celah. Strategi ini kuat untuk menutup permainan lewat dominasi coverage yang stabil.
+
+\subsubsection{Efektivitas Mikro}
+
+\begin{enumerate}
+    \item \textbf{Ruin control} cukup unggul karena Soldier memilih ruin paling prospektif, sedangkan Mopper membantu menjaga area sekitarnya dari enemy paint.
+    \item \textbf{Sustain fight} kuat karena refill tidak hanya bergantung pada satu paint tower, tetapi pada seluruh jaringan tower yang telah diketahui robot.
+    \item \textbf{Positional efficiency} baik karena navigasi memberi penalti pada enemy paint, kepadatan ally, dan osilasi posisi, sehingga unit lebih konsisten bergerak ke tile yang aman dan berguna.
+\end{enumerate}
+
+Strategi ini biasanya unggul pada peta terbuka hingga menengah yang memberi ruang untuk membangun jaringan tower dan mempertahankan frontier secara bertahap. Pada peta yang menuntut tekanan awal sangat cepat, pendekatan yang terlalu fokus pada stabilitas dapat tertinggal jika keunggulan ekonominya tidak segera dikonversi menjadi unit dan tekanan area.
+
+\subsection{Strategi yang Dipilih beserta Alasan dan Pertimbangan}
+
+Berdasarkan eksplorasi dan evaluasi di atas, strategi final \texttt{main\_bot} adalah alternatif kedua, yaitu \textit{balanced scoring control} yang tetap menempatkan tower-first expansion sebagai fondasi, tetapi tidak menutup peluang combat dan coverage agresif saat kondisi lokal menguntungkan.
+
+\subsubsection{Alasan Pemilihan}
+
+\begin{enumerate}
+    \item Pendekatan \textit{pure tower-first expansion} memang sangat stabil, tetapi berisiko kehilangan tempo ketika lawan memberi tekanan lebih cepat atau saat chips belum segera dikonversi menjadi tekanan lapangan.
+    \item Kombinasi Soldier-Splasher-Mopper pada \texttt{main\_bot} membagi tugas secara jelas: Soldier membangun dan membuka tekanan, Splasher mempercepat coverage, dan Mopper menjaga frontier tetap sehat.
+    \item Keputusan tetap diambil secara greedy lokal dengan scoring sederhana, sehingga implementasi tetap ringan, deterministik, dan sesuai dengan batas bytecode permainan.
+\end{enumerate}
+
 \section{Strategi Greedy Bot Alternatif 1: Greedy Offensive}
 
 Strategi \texttt{alternative\_bots\_1} dibangun dengan paradigma \textit{offensive greedy}, yaitu setiap unit selalu mencari aksi lokal bernilai serang tertinggi pada ronde berjalan, lalu hanya mundur sementara bila sumber daya kritis. Dengan kata lain, beberapa aspek seperti refill, transfer paint, dan ekonomi bukan dijadikan fungsi objektif utama.
