@@ -1,5 +1,383 @@
 
-\section{Implementasi Greedy 1 (Athilla)}
+\section{Implementasi Greedy Main Bot (Athilla)}
+
+\subsection{Pseudocode}
+
+\begin{breakablealgorithm}
+	\caption{Greedy State Selection dan Tower-First Expansion pada SoldierBot Main Bot}
+	\label{alg:mainbot-soldier-state}
+	\begin{algorithmic}[1]
+		\Require Tile terindera $nearby$, ally $allies$, musuh $enemies$
+		\Ensure Soldier memilih state lokal terbaik lalu menjalankan aksi bernilai tertinggi
+		\Function{GreedySoldierTurn}{$nearby, allies, enemies$}
+		\State $paintRatio \gets Paint / PaintCapacity$
+
+		\If{$paintRatio < REFILL\_LOW$ \textbf{or} $(state = REFILL \land paintRatio < REFILL\_HIGH)$}
+		\If{ada tower refill yang masih layak dijangkau}
+		\State $state \gets REFILL$
+		\EndIf
+		\EndIf
+
+		\If{$state \neq REFILL$ \textbf{and} terlihat tower musuh \textbf{and} $HP > 40$ \textbf{and} $paintRatio > 0.30$}
+		\State $state \gets COMBAT$
+		\EndIf
+
+		\If{$state \notin \{REFILL, COMBAT\}$}
+		\State $bestRuin \gets$ \Call{FindBestRuin}{$nearby, allies$}
+		\If{$bestRuin \neq null$ \textbf{and} $chips \geq 200$}
+		\State $state \gets BUILD\_TOWER$
+		\ElsIf{$towerCount \geq 3$ \textbf{and} ada paint tower \textbf{and} tidak ada musuh \textbf{and} $chips \geq 100$ \textbf{and} \Call{FindBestSRP}{} ada}
+		\State $state \gets BUILD\_SRP$
+		\Else
+		\State $state \gets EXPLORE$
+		\EndIf
+		\EndIf
+
+		\State \Call{ExecuteState}{$state$}
+		\State \Call{PaintUnderSelf}{}
+		\If{$state \neq REFILL$}
+		\State \Call{PaintNearbyEmpty}{$nearby$}
+		\EndIf
+		\State \Call{ConfirmTowerAndSRPPatterns}{}
+		\EndFunction
+	\end{algorithmic}
+\end{breakablealgorithm}
+
+\begin{breakablealgorithm}
+	\caption{Greedy Splash Coverage pada SplasherBot Main Bot}
+	\label{alg:mainbot-splasher-splash}
+	\begin{algorithmic}[1]
+		\Require Lokasi serang legal $ActionRadius$, daftar musuh $enemies$
+		\Ensure Titik splash dengan gain coverage tertinggi dipilih secara aman
+		\Function{BestSplashTarget}{$enemies$}
+		\State $bestLoc \gets null$
+		\State $bestValue \gets MIN\_SPLASH\_VALUE - 1$
+
+		\ForAll{$loc \in ActionRadius$}
+		\If{\textbf{not} \Call{CanAttack}{$loc$}}
+		\State \textbf{continue}
+		\EndIf
+
+		\If{ada tower musuh dengan $\Call{Dist}{loc, tower} \leq 4$}
+		\State \textbf{continue}
+		\EndIf
+
+		\State $value \gets 0$
+		\ForAll{$tile \in$ inner ring $3 \times 3$ sekitar $loc$}
+		\If{$Paint(tile) = EMPTY$}
+		\State $value \gets value + 2$
+		\ElsIf{$Paint(tile) = ENEMY$}
+		\State $value \gets value + 4$
+		\EndIf
+		\EndFor
+
+		\ForAll{$tile \in$ empat tile kardinal berjarak $2$ dari $loc$}
+		\If{$Paint(tile) = EMPTY$}
+		\State $value \gets value + 1$
+		\EndIf
+		\EndFor
+
+		\If{$value > bestValue$}
+		\State $bestValue \gets value$
+		\State $bestLoc \gets loc$
+		\EndIf
+		\EndFor
+
+		\State \Return $bestLoc$
+		\EndFunction
+	\end{algorithmic}
+\end{breakablealgorithm}
+
+\begin{breakablealgorithm}
+	\caption{Greedy Support, Mop, dan Paint Transfer pada MopperBot Main Bot}
+	\label{alg:mainbot-mopper-support}
+	\begin{algorithmic}[1]
+		\Require Tile terindera $nearby$, ally $allies$, musuh $enemies$
+		\Ensure Mopper menjaga frontier tetap bersih dan ally tetap aktif
+		\Function{MopperTurn}{$nearby, allies, enemies$}
+		\If{$PaintRatio < 0.15$}
+		\State \Call{Refill}{tower refill terbaik}
+		\State \Return
+		\EndIf
+
+		\If{ada arah \textit{mop swing} dengan jumlah target maksimum}
+		\State \Call{MopSwing}{arah terbaik}
+		\ElsIf{ada robot musuh non-tower dalam radius 2}
+		\State \Call{Attack}{robot musuh itu}
+		\ElsIf{ada enemy paint dekat yang legal diserang}
+		\State \Call{Attack}{tile enemy paint terbaik}
+		\EndIf
+
+		\If{paint Mopper surplus \textbf{and} ada ally non-tower dengan paint rendah}
+		\State \Call{TransferPaint}{ally terbaik}
+		\EndIf
+
+		\If{ada musuh dekat dan jalur aman}
+		\State \Call{MoveToward}{musuh}
+		\ElsIf{ada request \texttt{needMopperAt}}
+		\State \Call{BugNav}{lokasi request}
+		\ElsIf{ada Soldier terdekat yang perlu didukung}
+		\State \Call{MoveToward}{Soldier}
+		\Else
+		\State \Call{PatrolToExploreTarget}{}
+		\EndIf
+		\EndFunction
+	\end{algorithmic}
+\end{breakablealgorithm}
+
+\begin{breakablealgorithm}
+	\caption{Greedy Phase-Based Spawn dan Relay pada TowerBot Main Bot}
+	\label{alg:mainbot-tower-spawn}
+	\begin{algorithmic}[1]
+		\Require Ronde $round$, daftar ally $allies$, musuh $enemies$
+		\Ensure Tower men-spawn unit paling relevan lalu menyebarkan info tower
+		\Function{SpawnGreedy}{$round, allies, enemies$}
+		\If{ada Soldier musuh dekat tower}
+		\State Prioritaskan spawn \texttt{MOPPER} darurat
+		\State Kirim informasi tower ke unit baru
+		\State \Return
+		\EndIf
+
+		\If{terdeteksi enemy paint di sekitar tower}
+		\State Kirim pesan \texttt{needMopperAt} ke Mopper terdekat
+		\EndIf
+
+		\If{$round < 150$}
+		\State Pilih rasio dominan \texttt{SOLDIER} dengan sisipan \texttt{MOPPER}
+		\ElsIf{$round < 400$}
+		\State Pilih komposisi seimbang \texttt{SOLDIER-SPLASHER-MOPPER}
+		\Else
+		\State Pilih komposisi dominan \texttt{SPLASHER}
+		\EndIf
+
+		\State Skor semua lokasi spawn legal berdasarkan crowding dan status ally paint
+		\State Eksekusi \Call{BuildRobot}{tipe, lokasi terbaik} jika feasible
+		\State Kirim maksimal tiga pesan info tower ke unit yang baru di-spawn
+		\EndFunction
+	\end{algorithmic}
+\end{breakablealgorithm}
+
+\newpage
+\subsection{Struktur Data}
+
+Bagian ini menjelaskan struktur data pada level konsep, tipe, lokasi pemakaian, dan fungsinya pada implementasi \texttt{main\_bot}.
+\begin{table}[htbp]
+	\centering
+	\renewcommand{\arraystretch}{1.5}
+	\begin{tabular}{|p{3.5cm}|p{3.5cm}|p{4cm}|p{4cm}|}
+		\hline
+		\textbf{Struktur Data} & \textbf{Lokasi File} & \textbf{Kegunaan} & \textbf{Mekanisme \& Kompleksitas} \\
+		\hline
+		\textbf{Ring Buffer} \newline (Circular Array) & \texttt{Nav.java} & Menyimpan enam posisi terakhir robot untuk mendeteksi osilasi pergerakan. & Penimpaan elemen lama memakai indeks modulo. Operasi tulis dan baca efektif berjalan dalam $O(1)$. \\
+		\hline
+		\textbf{Array-based Stack} \newline (Tumpukan Statis) & \texttt{Nav.java} & Menyimpan urutan arah saat robot menjalankan \textit{bug navigation} di sekitar rintangan. & Menggunakan array statis ukuran tetap dan pointer indeks. Operasi \textit{push}/\textit{pop} konstan dalam $O(1)$. \\
+		\hline
+		\textbf{Array Registry Tower} & \texttt{Messaging.java} & Menyimpan daftar tower sekutu yang diketahui lengkap dengan tipenya untuk refill, relay, dan keputusan build. & Insert/update dilakukan lewat linear scan pendek; penghapusan tower menggunakan teknik \textit{swap-with-last} agar tetap efisien. \\
+		\hline
+		\textbf{Finite State Machine} \newline (FSM) & \texttt{SoldierBot.java}, \texttt{SplasherBot.java} & Mengatur transisi perilaku seperti \texttt{EXPLORE}, \texttt{REFILL}, \texttt{COMBAT}, \texttt{BUILD\_TOWER}, dan \texttt{BUILD\_SRP}. & Evaluasi state dilakukan dengan seleksi kondisi lokal dan \textit{switch-case}; kompleksitas tetap lokal dan cocok untuk batas bytecode. \\
+		\hline
+		\textbf{Konstanta Pola 5x5} & \texttt{SoldierBot.java} & Merepresentasikan pola SRP untuk validasi kebutuhan pewarnaan dan penyelesaian \textit{resource pattern}. & Lookup indeks matriks berjalan langsung dalam $O(1)$ dan menjaga logika pattern tetap deterministik. \\
+		\hline
+		\textbf{Bit-Packed Message} \newline 32-bit & \texttt{Messaging.java} & Mengompresi kode pesan, koordinat, dan payload agar pertukaran informasi antar unit tetap ringan. & Encode/decode menggunakan operasi \textit{bitwise} seperti \texttt{<<}, \texttt{>>>}, \texttt{\&}, dan \texttt{|}. Overhead sangat rendah dan sesuai limit komunikasi Battlecode. \\
+		\hline
+	\end{tabular}
+	\caption{Analisis Penggunaan Struktur Data pada Main Bot}
+\end{table}
+
+\newpage
+\subsection{Fungsi dan Prosedur}
+
+\subsubsection{1. RobotPlayer}
+\begin{enumerate}
+	\item \texttt{run(robotController)}:
+	      Menginisialisasi konteks global (tim, musuh, ukuran peta, ID unit), memanggil \texttt{Messaging.init()}, lalu menjadi dispatcher utama untuk \texttt{SoldierBot}, \texttt{SplasherBot}, \texttt{MopperBot}, atau \texttt{TowerBot}. Prosedur ini juga menjamin \texttt{Clock.yield()} selalu dieksekusi setiap ronde.
+\end{enumerate}
+
+\subsubsection{2. SoldierBot}
+\begin{enumerate}
+	\item \texttt{turn()}:
+	      Prosedur utama Soldier: inisialisasi spawn tower dan target eksplorasi, baca pesan, sensing map serta robot, registrasi tower ally, seleksi state greedy, eksekusi state, repaint lokal, konfirmasi pattern, lalu simpan histori posisi.
+
+	\item \texttt{greedyDecide(...)}:
+	      Fungsi seleksi greedy utama Soldier. Memilih \texttt{REFILL}, \texttt{COMBAT}, \texttt{BUILD\_TOWER}, \texttt{BUILD\_SRP}, atau \texttt{EXPLORE} berdasarkan paint ratio, visibilitas tower musuh, jumlah tower, keamanan area, dan cadangan chips.
+
+	\item \texttt{refillState(...)}:
+	      Menentukan tower refill terbaik dengan preferensi paint tower, bergerak ke target, lalu melakukan transfer paint negatif saat sudah dalam jarak yang legal.
+
+	\item \texttt{combatState(...)}:
+	      Menyerang tower musuh terdekat bila kondisi HP dan paint mendukung. Jika belum masuk radius aksi, Soldier melakukan reposisi dengan \texttt{moveIntoRange} lalu menyerang.
+
+	\item \texttt{buildTowerState(...)}:
+	      Menentukan tipe tower secara greedy, memberi mark pattern jika perlu, mengecat tile yang belum sesuai mark, bergerak mendekati ruin, lalu \texttt{completeTowerPattern} jika feasible.
+
+	\item \texttt{buildSRPState(...)}:
+	      Menjalankan proses pembangunan SRP dengan marking, painting berdasarkan mark, pendekatan ke pusat SRP, lalu \texttt{completeResourcePattern} jika syarat terpenuhi.
+
+	\item \texttt{exploreState(...)}:
+	      Menentukan target frontier atau tile kosong terdekat, lalu bergerak dengan \texttt{fuzzyMove} atau \texttt{bugNav}. Fungsi ini menjaga coverage terus bertambah ketika tidak ada tugas build atau combat yang lebih mendesak.
+
+	\item \texttt{decideTowerType(...)}:
+	      Menentukan tipe tower yang akan dibangun di ruin berdasarkan ancaman musuh lokal dan rasio jumlah paint/money/defense tower yang sudah dimiliki tim.
+
+	\item \texttt{paintUnderSelf(...)} dan \texttt{paintNearbyEmpty(...)}:
+	      Dua helper untuk menjamin tile tempat Soldier berdiri serta tile kosong legal di sekitarnya tetap dikonversi menjadi area sekutu setelah aksi utama dijalankan.
+
+	\item \texttt{paintMarkedTiles(...)}:
+	      Helper inti \textit{mark-based painting}. Fungsi ini mencari tile yang mark-nya belum sesuai dengan warna aktual, lalu mengecatnya dengan warna yang benar.
+
+	\item \texttt{findBestRuin(...)}:
+	      Mengevaluasi kandidat ruin berdasarkan progres pola yang sudah benar, jumlah enemy paint, kepadatan Soldier ally, dan penalti jarak agar prioritas pembangunan tetap efisien.
+
+	\item \texttt{findBestSRP(...)}:
+	      Memilih pusat SRP terbaik di sekitar Soldier berdasarkan kelayakan mark, ketiadaan enemy paint, dan kondisi apakah pola sudah selesai atau masih perlu dilanjutkan.
+
+	\item \texttt{findVisibleTowerLoc(...)}:
+	      Mencari tower refill terdekat yang terlihat, dengan prioritas paint tower tetapi tetap menerima tower tipe lain jika paint-nya cukup.
+
+	\item \texttt{initSpawnTower(...)}:
+	      Inisialisasi spawn tower asal sebagai referensi refill awal dan arah eksplorasi.
+
+	\item \texttt{broadcastTowerBuilt(...)}:
+	      Mengirim pesan ke tower ally terdekat setelah ruin berhasil diselesaikan menjadi tower baru agar registry tim cepat tersinkronisasi.
+
+	\item \texttt{confirmPatterns(...)}:
+	      Menyelesaikan tower pattern atau SRP yang kebetulan sudah valid di sekitar Soldier meskipun unit tidak sedang berada pada state build aktif.
+\end{enumerate}
+
+\subsubsection{3. SplasherBot}
+\begin{enumerate}
+	\item \texttt{turn()}:
+	      Prosedur utama Splasher: inisialisasi target eksplorasi, baca pesan, sensing ally-enemy-map, seleksi state \texttt{EXPLORE}/\texttt{REFILL}, bergerak, lalu memilih titik splash terbaik jika nilai area cukup tinggi.
+
+	\item \texttt{decide(...)}:
+	      Seleksi state lokal Splasher berdasarkan paint ratio dan ketersediaan tower refill yang masih layak dicapai.
+
+	\item \texttt{refillState(...)}:
+	      Menentukan tower refill terbaik dari observasi lokal atau registry messaging, lalu bergerak dan melakukan refill ketika jarak sudah memenuhi syarat transfer.
+
+	\item \texttt{exploreState(...)}:
+	      Mengarahkan Splasher ke klaster tile yang masih dapat dikonversi. Jika klaster lokal tidak memadai, unit bergerak ke target eksplorasi yang lebih jauh.
+
+	\item \texttt{bestSplashTarget(...)}:
+	      Fungsi objektif inti Splasher. Menilai setiap kandidat serang dari kombinasi gain pada inner ring, bonus tile kosong kardinal luar, dan larangan menyerang titik yang akan mengenai tower musuh.
+
+	\item \texttt{findPaintableCluster(...)}:
+	      Menghasilkan pusat massa dari tile kosong atau enemy paint yang legal, sehingga Splasher dapat bergerak ke area dengan potensi coverage terbaik.
+
+	\item \texttt{initSpawnTower(...)}:
+	      Inisialisasi spawn tower terdekat untuk kebutuhan refill awal dan pemilihan arah eksplorasi.
+\end{enumerate}
+
+\subsubsection{4. MopperBot}
+\begin{enumerate}
+	\item \texttt{turn()}:
+	      Menjalankan alur utama Mopper: baca pesan, sensing lingkungan, refill bila kritis, eksekusi aksi mop/attack, transfer paint ke ally, jalankan logika gerak support, lalu simpan histori posisi.
+
+	\item \texttt{refill(...)}:
+	      Menentukan tower refill terdekat dengan paint yang cukup, bergerak ke target, lalu melakukan transfer paint negatif ketika telah masuk jarak legal.
+
+	\item \texttt{mopAction(...)}:
+	      Menentukan prioritas aksi Mopper: \textit{mop swing} multi-hit lebih dulu, lalu direct attack ke robot musuh non-tower yang sangat dekat, kemudian membersihkan enemy paint di tanah.
+
+	\item \texttt{countSwingTargets(...)}:
+	      Menghitung jumlah target yang dapat terkena untuk setiap arah \textit{mop swing}, sehingga Mopper memilih arah serangan dengan dampak lokal terbesar.
+
+	\item \texttt{transferPaintToAlly(...)}:
+	      Menyalurkan paint dari Mopper ke ally non-tower dengan rasio paint terendah selama Mopper memiliki surplus. Fungsi ini menjaga kesinambungan pressure di frontline.
+
+	\item \texttt{moveLogic(...)}:
+	      Logika gerak support Mopper dengan urutan prioritas: kejar musuh dekat bila aman, tanggapi request \texttt{needMopperAt}, ikuti Soldier yang perlu didukung, atau patroli ke target eksplorasi.
+
+	\item \texttt{findNearestEnemyPaint(...)}:
+	      Helper pencari enemy paint terdekat di sekitar unit untuk kebutuhan pembersihan cepat.
+
+	\item \texttt{setNewExploreTarget(...)}:
+	      Menghasilkan target patroli baru berbasis arah sebar unit agar Mopper tidak diam di satu area yang sama terlalu lama.
+\end{enumerate}
+
+\subsubsection{5. TowerBot}
+\begin{enumerate}
+	\item \texttt{turn()}:
+	      Prosedur utama tower: inisialisasi lokasi spawn legal, baca pesan, register tower, serang target terbaik, upgrade jika ekonomi mendukung, broadcast identitas tower, relay data tower ke ally, lalu spawn unit.
+
+	\item \texttt{attackBest(...)}:
+	      Memilih target tembak terbaik dengan prioritas Soldier musuh lebih dulu, lalu target dengan HP terendah di dalam radius serang.
+
+	\item \texttt{upgradeIfAffordable(...)}:
+	      Melakukan upgrade level tower secara konservatif dengan syarat ronde, jumlah tower, dan chips terpenuhi agar tidak merusak tempo produksi unit.
+
+	\item \texttt{relayTowerList(...)}:
+	      Mengirim daftar tower yang diketahui ke unit non-tower di sekitar tower, maksimal tiga pesan per ally, supaya unit yang baru aktif segera mengetahui jaringan refill.
+
+	\item \texttt{spawnGreedy(...)}:
+	      Menangani produksi unit per ronde, termasuk spawn Mopper darurat saat ada Soldier musuh dekat, pengiriman request Mopper, pemilihan tipe unit, dan fallback spawn jika lokasi ideal tidak tersedia.
+
+	\item \texttt{chooseUnitType(...)}:
+	      Menentukan komposisi spawn berdasarkan fase ronde. Early didominasi Soldier, mid lebih seimbang, dan late lebih berat ke Splasher.
+
+	\item \texttt{trySpawnBest(...)}:
+	      Memilih lokasi spawn terbaik berdasarkan skor crowding ally dan status paint tile agar unit baru tidak langsung menumpuk di area yang buruk.
+
+	\item \texttt{sendTowerInfo(...)}:
+	      Mengirim maksimal tiga pesan informasi tower ke unit yang baru di-spawn agar sinkronisasi data dimulai sejak giliran pertama unit tersebut.
+\end{enumerate}
+
+\subsubsection{6. Nav}
+\begin{enumerate}
+	\item \texttt{recordPosition(...)}:
+	      Menyimpan posisi terakhir robot ke ring buffer untuk kebutuhan anti-osilasi.
+
+	\item \texttt{fuzzyMove(...)}:
+	      Gerak greedy berbasis urutan arah fuzzy yang memilih tile legal dengan skor lokal terbaik.
+
+	\item \texttt{safeFuzzyMove(...)}:
+	      Varian \texttt{fuzzyMove} yang menolak tile tujuan jika berada dalam jangkauan tower musuh.
+
+	\item \texttt{bugNav(...)}:
+	      Navigasi \textit{wall-following} saat jalur langsung menuju target tidak tersedia. State bug di-reset saat target berubah atau robot terlalu lama terjebak.
+
+	\item \texttt{tileScore(...)}:
+	      Fungsi nilai tile yang memberi bonus untuk ally paint dan empty tile, penalti untuk enemy paint, serta penalti tambahan untuk crowding ally dan osilasi.
+
+	\item \texttt{inEnemyTowerRange(...)} dan \texttt{nearestEnemyTower(...)}:
+	      Fungsi utilitas untuk memeriksa keamanan posisi terhadap tower musuh dan memilih tower musuh terdekat sebagai target.
+
+	\item \texttt{moveIntoRange(...)}:
+	      Mencoba memindahkan robot ke tile yang masuk radius aksi terhadap target sambil tetap mempertimbangkan skor tile lokal.
+
+	\item \texttt{extendToEdge(...)}:
+	      Menghasilkan target eksplorasi jauh ke arah tertentu dengan memperpanjang koordinat hingga mendekati tepi peta.
+\end{enumerate}
+
+\subsubsection{7. Messaging}
+\begin{enumerate}
+	\item \texttt{init()}:
+	      Mereset seluruh state komunikasi lokal seperti registry tower, request Mopper, sinyal contested ruin, enemy blob, dan retreat beacon.
+
+	\item \texttt{encode(...)} serta encoder spesifik:
+	      Mengemas kode pesan, koordinat, dan payload ke integer 32-bit untuk menjaga efisiensi komunikasi.
+
+	\item \texttt{readMessages()}:
+	      Membaca pesan beberapa ronde terakhir, mendekode isinya, memperbarui registry tower dan sinyal lokal, lalu membersihkan sinyal yang sudah kedaluwarsa.
+
+	\item \texttt{registerTower(...)} dan \texttt{removeTower(...)}:
+	      Mengelola basis data tower tim untuk kebutuhan refill, relay informasi, dan pengambilan keputusan build.
+
+	\item \texttt{nearestRefillTower(...)}, \texttt{nearestPaintTower(...)}, dan \texttt{nearestAnyTower(...)}:
+	      Kumpulan query greedy untuk mencari tower terbaik berdasarkan kebutuhan sustain unit.
+
+	\item \texttt{countPaintTowers(...)}, \texttt{countMoneyTowers(...)}, dan \texttt{countDefenseTowers(...)}:
+	      Fungsi statistik cepat yang dipakai oleh Soldier dan Tower saat menentukan prioritas build maupun spawn.
+
+	\item \texttt{relayToNearbyTower(...)}:
+	      Mendistribusikan informasi tower dari robot ke tower terdekat dengan mematuhi budget pesan per ronde.
+
+	\item \texttt{trySendMessage(...)} dan \texttt{tryBroadcastMessage(...)}:
+	      Wrapper pengiriman pesan yang menjaga agar komunikasi tidak melampaui limit Battlecode.
+
+	\item \texttt{clearStaleSignals(...)}:
+	      Menghapus sinyal kontestasi atau ancaman yang sudah usang agar keputusan lokal tetap relevan dengan kondisi terbaru.
+\end{enumerate}
 
 
 \section{Implementasi Greedy Bot Alternatif 1: Greedy Offensive}
