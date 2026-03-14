@@ -1,4 +1,4 @@
-package botathilla5;
+package main_bot;
 
 import battlecode.common.*;
 
