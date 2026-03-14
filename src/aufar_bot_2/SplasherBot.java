@@ -69,13 +69,13 @@ public class SplasherBot {
             return;
         }
 
-        // ---- Greedy splash targeting ----
+        // Greedy splash targeting
         boolean splashed = false;
         if (rc.isActionReady()) {
             splashed = trySplash(rc, me, nearby, enemies);
         }
 
-        // ---- Evade enemy towers ----
+        // Evade enemy towers
         RobotInfo tower = Nav.nearestEnemyTower(enemies);
         if (tower != null
             && me.distanceSquaredTo(tower.location) <= tower.type.actionRadiusSquared) {
@@ -83,7 +83,7 @@ public class SplasherBot {
             Nav.fuzzyMove(away);
         }
 
-        // ---- Move toward enemy paint frontier or empty areas ----
+        // Move toward enemy paint frontier or empty areas 
         MapLocation enemyCenter = findEnemyPaintCenter(nearby, me);
         if (enemyCenter != null) {
             Nav.safeFuzzyMove(enemyCenter, enemies);
@@ -101,7 +101,7 @@ public class SplasherBot {
             }
         }
 
-        // ---- Confirm tower patterns when near ruins ----
+        // Confirm tower patterns when near ruins 
         confirmPatterns(rc);
     }
 

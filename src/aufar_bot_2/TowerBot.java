@@ -10,7 +10,7 @@ import battlecode.common.RobotInfo;
 import battlecode.common.UnitType;
 
 /**
- * Greedy Tower Controller — coverage-optimized spawning.
+ * Greedy Tower Controller (coverage-optimized spawning).
  *
  * Strategy: spawn as many painters (soldiers + splashers) as possible.
  * Phase-based spawning ratio tuned for maximum map coverage:
@@ -154,7 +154,7 @@ public class TowerBot {
     }
 
     // Phase-Based Spawning
-    // Key difference from kevin_bot_1: heavier splasher ratio mid/late for area coverage
+    // heavier splasher ratio mid/late for area coverage
 
     private static void spawnByPhase(RobotController rc, RobotInfo[] enemies)
             throws GameActionException {
@@ -172,7 +172,7 @@ public class TowerBot {
             }
             spawnCounter++;
         } else if (round < 800) {
-            // Mid: soldier(2) → splasher(1) → mopper(1) — coverage heavy
+            // Mid: soldier(2) --> splasher(1) --> mopper(1) (coverage heavy)
             int phase = spawnCounter % 4;
             if (phase < 2) {
                 trySpawnBest(rc, UnitType.SOLDIER);
@@ -183,7 +183,7 @@ public class TowerBot {
             }
             spawnCounter++;
         } else if (rc.getChips() > 1000) {
-            // Late: soldier(1) → splasher(2) → mopper(1) — heavy area denial
+            // Late: soldier(1) --> splasher(2) --> mopper(1) (heavy area denial)
             int phase = spawnCounter % 4;
             if (phase == 0) {
                 trySpawnBest(rc, UnitType.SOLDIER);

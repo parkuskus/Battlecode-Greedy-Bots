@@ -7,8 +7,6 @@ import battlecode.common.RobotController;
 import battlecode.common.Team;
 
 /**
- * aufar_bot_2 — Greedy coverage-maximizing Battlecode 2025 bot.
- *
  * Architecture: modular per-unit controllers with shared navigation & comms.
  * Strategy: aggressive map exploration with coverage-first decision making.
  * Win condition target: maximize paint coverage for round-2000 tiebreak.
