@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+
+<body>
+    <input id="soldierWeight" type="number" value="2" step="0.01">
+    <input id="splasherWeight" type="number" value="2" step="0.01">
+    <input id="mopperWeight" type="number" value="2" step="0.01">
+    <div id="display"></div>
+    <script>
+        var update = function() {
+            var sw = parseFloat(soldierWeight.value);
+            var spw = parseFloat(splasherWeight.value);
+            var mw = parseFloat(mopperWeight.value);
+            var sum = sw + spw + mw;
+            sw /= sum;
+            spw /= sum;
+            mw /= sum;
+            var ds = 0;
+            var dsp = 0;
+            var dm = 0;
+            var s = 0;
+            var sp = 0;
+            var m = 0;
+            display.innerHTML = "spawning: ";
+            for (var i = 0; i < 20; i++) {
+                var soldiers = ds - s + sw;
+                var splashers = dsp - sp + spw;
+                var moppers = dm - m + mw;
+                if (soldiers >= splashers && soldiers >= moppers) {
+                    display.innerHTML += "<br><span style='background-color: pink'>soldier</span>";
+                    s++;
+                }
+                else if (splashers >= moppers) {
+                    display.innerHTML += "<br><span style='background-color: lime'>splasher</span>";
+                    sp++;
+                }
+                else {
+                    display.innerHTML += "<br><span style='background-color: lightblue'>mopper</span>";
+                    m++;
+                }
+                ds += sw;
+                dsp += spw;
+                dm += mw;
+            }
+        };
+        soldierWeight.oninput = update;
+        splasherWeight.oninput = update;
+        mopperWeight.oninput = update;
+        update();
+    </script>
+</body>
