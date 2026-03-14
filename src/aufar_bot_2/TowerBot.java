@@ -95,7 +95,7 @@ public class TowerBot {
         }
     }
 
-    // ====== Upgrade ======
+    // Upgrade
 
     private static void tryUpgrade(RobotController rc, RobotInfo[] allies)
             throws GameActionException {
@@ -109,7 +109,7 @@ public class TowerBot {
         }
     }
 
-    // ====== Attack ======
+    // Attack
 
     private static void attackBestTarget(RobotController rc, RobotInfo[] enemies)
             throws GameActionException {
@@ -134,7 +134,7 @@ public class TowerBot {
         if (best != null) rc.attack(best.location);
     }
 
-    // ====== Mopper Request ======
+    // Mopper Request
 
     private static void requestMopperIfNeeded(RobotController rc, MapLocation me,
             RobotInfo[] allies) throws GameActionException {
@@ -153,7 +153,7 @@ public class TowerBot {
         }
     }
 
-    // ====== Phase-Based Spawning ======
+    // Phase-Based Spawning
     // Key difference from kevin_bot_1: heavier splasher ratio mid/late for area coverage
 
     private static void spawnByPhase(RobotController rc, RobotInfo[] enemies)

@@ -8,16 +8,16 @@ import battlecode.common.PaintType;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
 
-/**
- * Navigation helpers — coverage-aware movement for all mobile units.
- *
- * Tile scoring prioritizes EMPTY tiles highly (+5) to maximize fresh coverage,
- * rewards enemy paint flipping (+3), and slightly rewards ally paint (+1).
- * BugNav with wall-following for pathfinding around obstacles.
+/*
+  Navigation helpers — coverage-aware movement for all mobile units.
+ 
+  Tile scoring prioritizes EMPTY tiles highly (+5) to maximize fresh coverage,
+  rewards enemy paint flipping (+3), and slightly rewards ally paint (+1).
+  BugNav with wall-following for pathfinding around obstacles.
  */
 public class Nav {
 
-    // ====== Fuzzy Move (direction-cone with tile scoring) ======
+    // Fuzzy Move (direction-cone with tile scoring) 
 
     static boolean fuzzyMove(MapLocation target) throws GameActionException {
         RobotController rc = RobotPlayer.rc;
@@ -46,7 +46,7 @@ public class Nav {
         return false;
     }
 
-    // ====== Safe Fuzzy Move (avoids enemy tower ranges) ======
+    // Safe Fuzzy Move (avoids enemy tower ranges)
 
     static boolean safeFuzzyMove(MapLocation target, RobotInfo[] enemies) throws GameActionException {
         RobotController rc = RobotPlayer.rc;
@@ -69,7 +69,7 @@ public class Nav {
         return false;
     }
 
-    // ====== BugNav (wall-following with tile scoring) ======
+    // BugNav (wall-following with tile scoring)
 
     private static Direction[] bugStack = new Direction[80];
     private static int bugIdx = 0;
@@ -132,7 +132,7 @@ public class Nav {
         }
     }
 
-    // ====== Coverage-Aware Tile Scoring ======
+    // Coverage-Aware Tile Scoring
     // EMPTY tiles scored highest (+6) to maximize fresh paint coverage.
     // Enemy paint scored +4 (valuable to flip). Ally paint +1 (safe but no coverage gain).
 
@@ -148,7 +148,7 @@ public class Nav {
         return 0;
     }
 
-    // ====== Move Into Range ======
+    // Move Into Range
 
     static boolean moveIntoRange(MapLocation target, int rangeSq) throws GameActionException {
         RobotController rc = RobotPlayer.rc;
@@ -167,7 +167,7 @@ public class Nav {
         return rc.getLocation().distanceSquaredTo(target) <= rangeSq;
     }
 
-    // ====== Helpers ======
+    // Helpers
 
     static boolean inEnemyTowerRange(MapLocation loc, RobotInfo[] enemies) {
         for (RobotInfo e : enemies) {

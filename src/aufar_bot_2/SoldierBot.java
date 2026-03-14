@@ -108,9 +108,7 @@ public class SoldierBot {
         confirmPatterns(rc, me);
     }
 
-    // ============================================================
-    //                    GREEDY STATE SELECTION
-    // ============================================================
+    // Greedy State Selection
 
     private static State greedyDecide(RobotController rc, MapLocation me,
             MapInfo[] nearby, RobotInfo[] allies, RobotInfo[] enemies)
@@ -155,9 +153,7 @@ public class SoldierBot {
         return State.COVER;
     }
 
-    // ============================================================
-    //                       STATE HANDLERS
-    // ============================================================
+    // State Handlers
 
     private static void doRefill(RobotController rc, MapLocation me,
             RobotInfo[] allies) throws GameActionException {
@@ -302,9 +298,7 @@ public class SoldierBot {
         }
     }
 
-    // ============================================================
-    //                     PAINTING HELPERS
-    // ============================================================
+    // Painting Helpers
 
     private static void paintUnderSelf(RobotController rc, MapLocation me)
             throws GameActionException {
@@ -376,9 +370,7 @@ public class SoldierBot {
         }
     }
 
-    // ============================================================
-    //              GREEDY RUIN / SRP / TOWER FINDING
-    // ============================================================
+    // Greedy Ruin / SRP / Tower Finding
 
     /** Find ruin with most ally paint already placed (closest to completion). */
     private static MapLocation findBestRuin(RobotController rc, MapLocation me,
@@ -421,7 +413,7 @@ public class SoldierBot {
         return best;
     }
 
-    /** Find closest completable SRP center. */
+    /* Find closest completable SRP center. */
     private static MapLocation findBestSRP(RobotController rc, MapLocation me)
             throws GameActionException {
         for (int dx = -4; dx <= 4; dx += 4) {
@@ -454,7 +446,7 @@ public class SoldierBot {
         return null;
     }
 
-    /** Money first (2.5:1 ratio early, 1.5:1 later), then paint. */
+    /* Money first (2.5:1 ratio early, 1.5:1 later), then paint. */
     private static UnitType decideTowerType(RobotController rc) {
         int money = Comms.countMoneyTowers();
         int paint = Comms.countPaintTowers();
@@ -513,9 +505,7 @@ public class SoldierBot {
         }
     }
 
-    // ============================================================
-    //                SECTOR PARTITIONING HELPERS
-    // ============================================================
+    // Sector Partitioning Helpers
 
     private static boolean belongsToMySector(MapLocation loc) {
         int col = loc.x * SECTOR_COLS / RobotPlayer.mapW;
@@ -541,9 +531,7 @@ public class SoldierBot {
         return DEFENSE_TOWER_PATTERN;
     }
 
-    // ============================================================
-    //                         INIT
-    // ============================================================
+    // Init
 
     private static void initSpawn(RobotController rc, MapLocation me)
             throws GameActionException {

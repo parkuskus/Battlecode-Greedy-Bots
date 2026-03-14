@@ -7,15 +7,15 @@ import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
 import battlecode.common.UnitType;
 
-/**
- * Lightweight messaging with bit-packed 32-bit integers.
- *
- * Format: [31..29] code | [28..23] x | [22..17] y | [16..15] payload | [14..0] unused
- * Codes: 0=TOWER_BUILT, 1=NEED_MOPPER, 2=ENEMY_TOWER
- *
- * Maintains a shared tower registry for all units.
- * Messaging constraint: robots can only sendMessage to towers,
- * towers can sendMessage to robots or broadcastMessage.
+/*
+ Lightweight messaging with bit-packed 32-bit integers.
+
+ Format: [31..29] code | [28..23] x | [22..17] y | [16..15] payload | [14..0] unused
+ Codes: 0=TOWER_BUILT, 1=NEED_MOPPER, 2=ENEMY_TOWER
+ 
+ Maintains a shared tower registry for all units.
+ Messaging constraint: robots can only sendMessage to towers,
+ towers can sendMessage to robots or broadcastMessage.
  */
 public class Comms {
 
@@ -35,7 +35,7 @@ public class Comms {
         needMopperAt = null;
     }
 
-    // ====== Encoding ======
+    // Encoding
 
     static int encode(int code, MapLocation loc, int payload) {
         return ((code & 0x7) << 29)
@@ -58,7 +58,7 @@ public class Comms {
         return encode(CODE_ENEMY_TOWER, loc, 0);
     }
 
-    // ====== Decoding ======
+    // Decoding 
 
     static void readMessages() throws GameActionException {
         RobotController rc = RobotPlayer.rc;
@@ -80,7 +80,7 @@ public class Comms {
         }
     }
 
-    // ====== Tower Registry ======
+    // Tower Registry 
 
     static void registerTower(MapLocation loc, UnitType type) {
         for (int i = 0; i < towerCount; i++) {

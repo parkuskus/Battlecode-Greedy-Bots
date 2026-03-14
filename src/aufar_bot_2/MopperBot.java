@@ -89,9 +89,7 @@ public class MopperBot {
         return State.EXPLORE;
     }
 
-    // ============================================================
-    //                       STATE HANDLERS
-    // ============================================================
+    // STATE HANDLERS
 
     private static void combat(RobotController rc, MapLocation me,
             RobotInfo[] enemies) throws GameActionException {
@@ -203,7 +201,7 @@ public class MopperBot {
         }
     }
 
-    // ====== Invariant Actions ======
+    // Invariant Actions 
 
     private static void invariantActions(RobotController rc, MapLocation me,
             MapInfo[] nearby, RobotInfo[] allies) throws GameActionException {
@@ -245,9 +243,9 @@ public class MopperBot {
         }
     }
 
-    // ====== Helpers ======
+    //  Helpers 
 
-    /** Find best combat target: prefer soldiers with lowest paint. */
+    /* Find best combat target: prefer soldiers with lowest paint. */
     private static RobotInfo findCombatTarget(RobotInfo[] enemies) {
         RobotInfo best = null;
         boolean foundSoldier = false;
@@ -271,7 +269,7 @@ public class MopperBot {
         return best;
     }
 
-    /** Find best mop-swing direction hitting 2+ enemies. */
+    /* Find best mop-swing direction hitting 2+ enemies. */
     private static Direction findBestMopSwing(MapLocation me, RobotInfo[] enemies) {
         int[] counts = new int[4];
         Direction[] cardinals = {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
