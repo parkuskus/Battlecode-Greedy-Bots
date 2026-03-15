@@ -97,39 +97,6 @@ Output yang diharapkan:
 - `alternative_bots_1`
 - `alternative_bots_2`
 
-### 4. Jalankan match headless
-Nilai default diambil dari `gradle.properties` (`teamA`, `teamB`, `maps`), atau override via `-P...`.
-
-Contoh 1 map:
-```bash
-./gradlew run \
-  -PteamA=main_bot \
-  -PteamB=alternative_bots_2 \
-  -Pmaps=DefaultSmall \
-  -Preplay=matches/main-vs-alt2-defaultsmall.bc25 \
-  -PoutputVerbose=false
-```
-
-Contoh mirror run (untuk menghindari bias urutan tim):
-```bash
-./gradlew run \
-  -PteamA=alternative_bots_2 \
-  -PteamB=main_bot \
-  -Pmaps=DefaultSmall \
-  -Preplay=matches/main-vs-alt2-defaultsmall-mirror.bc25 \
-  -PoutputVerbose=false
-```
-
-Contoh multi-map (comma-separated):
-```bash
-./gradlew run \
-  -PteamA=main_bot \
-  -PteamB=alternative_bots_1 \
-  -Pmaps=DefaultSmall,DefaultMedium,DefaultLarge,DefaultHuge \
-  -Preplay=matches/main-vs-alt1-default-suite.bc25 \
-  -PoutputVerbose=false
-```
-
 ## Konfigurasi `gradle.properties`
 File ini berisi default untuk run task:
 - `teamA`
