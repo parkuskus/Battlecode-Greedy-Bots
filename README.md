@@ -1,53 +1,149 @@
-# Battlecode 2025 Scaffold - Java
+# Tugas Besar 1 IF2211 Strategi Algoritma
+## Jambi X Bekasi - Battlecode 2025 Greedy Bots
 
-This is the Battlecode 2025 Java scaffold, containing an `examplefuncsplayer`. Read https://play.battlecode.org/bc25java/quick_start !
+Repositori ini berisi implementasi tiga bot Battlecode 2025 berbasis algoritma greedy:
+- `main_bot` (bot utama, final)
+- `alternative_bots_1` (varian offensive)
+- `alternative_bots_2` (varian coverage-maximizing)
 
+Selain source bot, repositori ini juga berisi laporan lengkap LaTeX (`docs/`).
 
-### Project Structure
+## Tim
+- Kevin Wirya Valerian (13524019)
+- Muhammad Aufar Rizqi Kusuma (13524061)
+- Athilla Zaidan Zidna Fann (13524068)
 
-- `README.md`
-    This file.
-- `build.gradle`
-    The Gradle build file used to build and run players.
-- `src/`
-    Player source code.
-- `test/`
-    Player test code.
-- `client/`
-    Contains the client. The proper executable can be found in this folder (don't move this!)
-- `build/`
-    Contains compiled player code and other artifacts of the build process. Can be safely ignored.
-- `matches/`
-    The output folder for match files.
-- `maps/`
-    The default folder for custom maps.
-- `gradlew`, `gradlew.bat`
-    The Unix (OS X/Linux) and Windows versions, respectively, of the Gradle wrapper. These are nifty scripts that you can execute in a terminal to run the Gradle build tasks of this project. If you aren't planning to do command line development, these can be safely ignored.
-- `gradle/`
-    Contains files used by the Gradle wrapper scripts. Can be safely ignored.
+## Ringkasan Strategi
 
-### How to get started
+### 1. `main_bot` - `scoring-based nearest-target` (final)
+Fokus utama:
+- Tower-first expansion yang tetap seimbang dengan combat oportunistik.
+- Soldier dengan state `EXPLORE`, `REFILL`, `COMBAT`, `BUILD_TOWER`, `BUILD_SRP`.
+- Splasher untuk akselerasi coverage (menghindari splash berisiko ke tower musuh).
+- Mopper sebagai support stabilizer (mop swing, cleanup enemy paint, transfer paint).
+- Tower spawn berbasis fase (early Soldier-heavy, mid balanced, late Splasher-heavy).
 
-You are free to directly edit `examplefuncsplayer`.
-However, we recommend you make a new bot by copying `examplefuncsplayer` to a new package under the `src` folder.
+Kekuatan utama:
+- Stabil lintas fase game (early-mid-late).
+- Ekspansi + sustain cenderung konsisten di banyak map.
 
-### Useful Commands
+### 2. `alternative_bots_1` - `Greedy Offensive`
+Fokus utama:
+- Tekanan ofensif tinggi: `RUSH`/`ATTACK` cepat ke arah target musuh.
+- Splasher dan Soldier lebih agresif mengejar momentum serang.
+- Build/refill tetap ada tetapi bukan objektif utama.
 
-- `./gradlew build`
-    Compiles your player
-- `./gradlew run`
-    Runs a game with the settings in gradle.properties
-- `./gradlew update`
-    Update configurations for the latest version -- run this often
-- `./gradlew zipForSubmit`
-    Create a submittable zip file
-- `./gradlew tasks`
-    See what else you can do!
+Kekuatan utama:
+- Bisa memberi pressure tinggi pada map/map state yang cocok.
 
+Trade-off:
+- Lebih sensitif terhadap kegagalan early push dan manajemen resource.
 
-### Configuration 
+### 3. `alternative_bots_2` - `coverage-maximizing greedy`
+Fokus utama:
+- Coverage-first untuk unggul area (termasuk skenario tiebreak akhir).
+- Soldier `REFILL`, `COMBAT`, `BUILD`, `SRP`, `COVER`.
+- Sector partitioning dan eksplorasi yang minim overlap.
+- Spawn phase-based berorientasi coverage.
 
-Look at `gradle.properties` for project-wide configuration.
+Kekuatan utama:
+- Kontrol area yang stabil pada map terbuka/semi-terbuka.
 
-If you are having any problems with the default client, please report to teh devs and
-feel free to set the `compatibilityClient` configuration to `true` to download a different version of the client.
+## Struktur Proyek
+
+```text
+.
+├── src/
+│   ├── main_bot/
+│   ├── alternative_bots_1/
+│   └── alternative_bots_2/
+├── docs/
+│   ├── main.tex
+│   └── sections/
+├── matches/
+├── artifacts/
+│   ├── engine/engine.jar
+│   └── client/
+├── build.gradle
+├── gradle.properties
+└── README.md
+```
+
+Catatan:
+- `artifacts/engine/engine.jar` dan artifact client sudah disediakan di repo ini.
+- Output replay pertandingan headless disimpan di folder `matches/`.
+
+## Prasyarat
+- JDK 21 (wajib)
+- OS: Windows/Linux/macOS
+- (Opsional) TeX Live + `latexmk` jika ingin build laporan PDF
+
+## Quick Start
+
+### 1. Build project
+```bash
+./gradlew build
+```
+### 2. Jalankan App
+Untuk menjalankan App, jalankan "Stima Battle Client.exe" di folder client
+
+### 3. Lihat bot yang tersedia
+```bash
+./gradlew -q listPlayers
+```
+
+Output yang diharapkan:
+- `main_bot`
+- `alternative_bots_1`
+- `alternative_bots_2`
+
+### 4. Jalankan match headless
+Nilai default diambil dari `gradle.properties` (`teamA`, `teamB`, `maps`), atau override via `-P...`.
+
+Contoh 1 map:
+```bash
+./gradlew run \
+  -PteamA=main_bot \
+  -PteamB=alternative_bots_2 \
+  -Pmaps=DefaultSmall \
+  -Preplay=matches/main-vs-alt2-defaultsmall.bc25 \
+  -PoutputVerbose=false
+```
+
+Contoh mirror run (untuk menghindari bias urutan tim):
+```bash
+./gradlew run \
+  -PteamA=alternative_bots_2 \
+  -PteamB=main_bot \
+  -Pmaps=DefaultSmall \
+  -Preplay=matches/main-vs-alt2-defaultsmall-mirror.bc25 \
+  -PoutputVerbose=false
+```
+
+Contoh multi-map (comma-separated):
+```bash
+./gradlew run \
+  -PteamA=main_bot \
+  -PteamB=alternative_bots_1 \
+  -Pmaps=DefaultSmall,DefaultMedium,DefaultLarge,DefaultHuge \
+  -Preplay=matches/main-vs-alt1-default-suite.bc25 \
+  -PoutputVerbose=false
+```
+
+## Konfigurasi `gradle.properties`
+File ini berisi default untuk run task:
+- `teamA`
+- `teamB`
+- `maps`
+- `debug`
+- `outputVerbose`
+- `showIndicators`
+- `validateMaps`
+- `alternateOrder`
+
+Kamu bisa:
+- mengubah default di file ini, atau
+- override langsung lewat `-Pkey=value` saat menjalankan command.
+
+## Build Laporan PDF
+Laporan ada di `docs/` dengan entry point `docs/main.tex`.
