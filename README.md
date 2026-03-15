@@ -113,4 +113,4 @@ Kamu bisa:
 - override langsung lewat `-Pkey=value` saat menjalankan command.
 
 ## Build Laporan PDF
-Laporan ada di `docs/` dengan entry point `docs/main.tex`.
+Laporan ada di `docs/folder/` dengan entry point `docs/folder/main.tex`.
