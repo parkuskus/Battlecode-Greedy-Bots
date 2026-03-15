@@ -1169,11 +1169,16 @@ Pada akhirnya, terlihat bahwa dalam sekitar 350 ronde, bot utama berhasil menutu
 
 \subsection{Battle 1B: Main Bot vs Bot Alternatif 2 - DefaultSmall}
 
-Berdasarkan pengujian headless yang dijalankan langsung pada map \texttt{DefaultSmall}, \texttt{main\_bot} berhasil mengalahkan \texttt{alternative\_bots\_2} secara konsisten. Pada run pertama ketika \texttt{main\_bot} menjadi tim A, kemenangan diperoleh pada ronde ke-366 melalui dominasi coverage. Untuk menghindari bias urutan tim, pengujian diulang dengan posisi dibalik dan \texttt{main\_bot} tetap menang sebagai tim B, bahkan lebih cepat, yaitu pada ronde ke-285 dengan kondisi kemenangan yang sama.
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.75\textwidth]{public/battle-1b.png}
+    \caption{Visualisasi Battle 1B menjelang Akhir Permainan}
+    \label{fig:battle-1b}
+\end{figure}
 
-Hasil ini menunjukkan bahwa pada peta kecil seperti \texttt{DefaultSmall}, \texttt{main\_bot} lebih efisien dalam mengubah keuntungan lokal menjadi kontrol wilayah permanen. Meskipun \texttt{alternative\_bots\_2} juga dirancang untuk memaksimalkan coverage, \texttt{main\_bot} unggul karena Soldier-nya lebih cepat membangun jaringan tower melalui heuristik ruin terbaik, sementara Tower dapat segera memproduksi unit lanjutan dengan ritme yang stabil. Jaringan tower yang cepat terbentuk juga membuat refill menjadi lebih konsisten, sehingga tempo ekspansi \texttt{main\_bot} tidak mudah putus.
+Dari pengamatan, dapat dilihat bahwa pada map \texttt{DefaultSmall}, bot utama berhasil mengambil alih tempo permainan lebih cepat dibandingkan bot alternatif 2. Menjelang akhir permainan, wilayah bagian bawah dan tengah peta hampir seluruhnya sudah dikuasai oleh bot utama, sedangkan bot alternatif 2 terdorong ke sisi kanan atas dan hanya mempertahankan beberapa area yang terpisah. Grafik coverage juga menunjukkan selisih yang jelas: kurva bot utama sudah berada di kisaran 60\% lebih, sementara kurva bot alternatif 2 tertahan di sekitar 30\%. Hasil akhir yang tercatat pada client memperlihatkan bahwa bot utama menang dengan \textit{paint majority} setelah 367 ronde.
 
-Selain itu, \texttt{main\_bot} menunjukkan kombinasi peran yang lebih cocok untuk map sempit. Splasher pada \texttt{main\_bot} fokus pada konversi area yang aman tanpa membuang paint untuk duel tower yang tidak perlu, sedangkan Mopper menjaga frontier agar enemy paint tidak bertahan lama. Di sisi lain, \texttt{alternative\_bots\_2} yang bersifat \textit{balanced expansion} cenderung lebih kuat pada peta terbuka sampai semi-terbuka. Pada \texttt{DefaultSmall}, ruang geraknya lebih sempit sehingga keunggulan sektor dan ekspansi bertahapnya tidak berkembang optimal. Akibatnya, tekanan coverage \texttt{main\_bot} lebih cepat menumpuk dan lawan kalah sebelum dapat membalikkan kontrol area di fase menengah permainan.
+Pada akhirnya, terlihat bahwa bot alternatif 2 tidak runtuh karena kekurangan ekonomi, melainkan karena gagal mengubah ekspansi awalnya menjadi kontrol wilayah yang stabil. Strategi \textit{balanced expansion} miliknya membutuhkan ruang gerak yang lebih luas, sedangkan pada map kecil seperti ini, \texttt{main\_bot} lebih diuntungkan oleh pola \textit{tower-first expansion}, refill yang cepat, dan dukungan Splasher-Mopper yang menjaga frontier tetap bersih. Hal ini membuat tekanan coverage bot utama terus menumpuk sampai lawan tidak lagi mampu mengejar selisih wilayah di fase menengah hingga akhir permainan.
 
 \subsection{Battle 2A: Main Bot vs Bot Alternatif 1 - MoneyTower}
 \begin{figure}[htbp]
@@ -1196,9 +1201,16 @@ Pada akhir ronde ke-800, kelompok kami mengamati bahwa soldier yang dikeluarkan 
 
 \subsection{Battle 2B: Main Bot vs Bot Alternatif 2 - MoneyTower}
 
-Berdasarkan pengujian headless yang dijalankan langsung pada map \texttt{MoneyTower}, \texttt{main\_bot} berhasil mengalahkan \texttt{alternative\_bots\_2} pada dua orientasi tim. Saat \texttt{main\_bot} menjadi tim A, kemenangan terjadi pada ronde ke-887 melalui dominasi coverage. Pengujian kemudian diulang dengan posisi dibalik untuk menghindari bias urutan tim, dan \texttt{main\_bot} kembali menang sebagai tim B pada ronde ke-1070, juga dengan kondisi kemenangan coverage.
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.75\textwidth]{public/battle-2b.png}
+    \caption{Visualisasi Battle 2B menjelang Akhir Permainan}
+    \label{fig:battle-2b}
+\end{figure}
 
-Hasil ini menunjukkan bahwa pada map yang mendorong ekonomi seperti \texttt{MoneyTower}, \texttt{main\_bot} lebih konsisten menjaga transisi dari akumulasi chips ke kontrol area permanen. Di fase menengah, \texttt{alternative\_bots\_2} sempat menahan laju coverage lewat pendekatan \textit{balanced expansion}, tetapi \texttt{main\_bot} tetap unggul karena Soldier lebih stabil menyelesaikan ruin yang prospektif, Splasher lebih disiplin mengeksekusi splash bernilai tinggi, dan Mopper menjaga frontier agar enemy paint tidak bertahan lama. Efek gabungan ini membuat tempo ekspansi \texttt{main\_bot} tidak terputus sampai akhirnya melewati ambang kemenangan coverage.
+Map \texttt{MoneyTower} kembali menjadi kasus yang menarik untuk diamati. Berbeda dengan Battle 2A yang menjadi \textit{edge case} kemenangan bot alternatif 1, pada pertandingan melawan bot alternatif 2 justru bot utama mampu mempertahankan dominasinya sampai akhir. Dari statistik yang terlihat, bot alternatif 2 sempat menumpuk chips dalam jumlah sangat besar, bahkan mencapai sekitar 24.670, tetapi coverage-nya justru turun hingga sekitar 9.1\%. Sebaliknya, kurva coverage bot utama terus meningkat hingga melewati 60\% dan grafik paint-nya naik tajam pada fase akhir. Hasil pada client mencatat bot utama menang dengan \textit{paint majority} setelah 888 ronde.
+
+Pada akhirnya, terlihat bahwa bot alternatif 2 mengalami masalah yang berbeda dari bot alternatif 1. Ia tidak kalah karena terlalu agresif, melainkan karena terlalu lambat mengonversi keunggulan ekonomi menjadi kontrol area nyata di peta. Visualisasi juga menunjukkan bahwa hampir seluruh area luar dan sebagian besar jalur penting telah dikuasai bot utama, sementara wilayah bot alternatif 2 terpecah dan tidak lagi memberikan tekanan berarti. Dengan adanya jaringan tower yang lebih matang serta penggunaan Splasher dan Mopper yang lebih efektif, bot utama mampu menjaga ritme ekspansi sampai lawan tertinggal terlalu jauh dalam persentase wilayah.
 
 \subsection{Battle 3A: Main Bot vs Bot Alternatif 1 - DefaultHuge}
 \begin{figure}[htbp]
@@ -1221,8 +1233,15 @@ Banyak sekali hal yang dapat dianalisis dari hasil akhir pertandingan ketiga ini
 
 \subsection{Battle 3B: Main Bot vs Bot Alternatif 2 - DefaultHuge}
 
-Pengujian headless pada map \texttt{DefaultHuge} juga memperlihatkan hasil yang konsisten untuk \texttt{main\_bot}. Pada run pertama ketika \texttt{main\_bot} berada di sisi A, kemenangan diperoleh pada ronde ke-521 melalui dominasi coverage. Saat posisi tim dibalik, \texttt{main\_bot} tetap menang sebagai tim B pada ronde ke-571 dengan kondisi kemenangan yang sama. Dengan demikian, hasil pada peta besar ini stabil terhadap perubahan urutan tim.
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.75\textwidth]{public/battle-3b.png}
+    \caption{Visualisasi Battle 3B menjelang Akhir Permainan}
+    \label{fig:battle-3b}
+\end{figure}
 
-Secara analitis, peta luas memberikan ruang eksplorasi yang besar untuk kedua bot, tetapi \texttt{main\_bot} lebih cepat mengubah ruang tersebut menjadi keunggulan permanen. Pola \textit{tower-first expansion} pada Soldier menjaga rantai refill tetap sehat, kemudian komposisi spawn Tower yang beralih ke Splasher di fase menengah mempercepat konversi area pada frontier yang jauh. Di sisi lain, \texttt{alternative\_bots\_2} cenderung membutuhkan waktu lebih lama untuk mengonsolidasikan sektor-sektor hasil eksplorasi, sehingga tekanan coverage dari \texttt{main\_bot} menumpuk lebih cepat. Dampaknya, permainan berakhir sebelum lawan sempat memaksimalkan keunggulan jangka panjang yang biasanya muncul di ronde sangat akhir.
+Pada map yang sangat luas, pertandingan antara bot utama dan bot alternatif 2 berlangsung lebih lama, tetapi hasil akhirnya tetap dimenangkan oleh bot utama. Dari tampilan client, dapat dilihat bahwa permainan baru dipastikan selesai pada ronde ke-522 melalui \textit{paint majority}. Visualisasi menjelang akhir pertandingan memperlihatkan bahwa bot utama sudah menguasai sebagian besar area bawah dan tengah peta, sedangkan bot alternatif 2 lebih banyak bertahan di area atas dan sisi kanan. Berbeda dengan \texttt{DefaultSmall}, pada map ini bot alternatif 2 masih sempat mempertahankan coverage dalam waktu yang lebih lama karena ruang ekspansinya memang jauh lebih besar.
+
+Pada akhirnya, dapat dianalisis bahwa bot alternatif 2 memang lebih kompetitif di map luas dibandingkan di map kecil, tetapi \texttt{main\_bot} tetap lebih unggul dalam menjaga konektivitas wilayah yang sudah direbut. Pola \textit{tower-first expansion} membuat bot utama memiliki rantai refill yang lebih sehat, lalu peralihan spawn ke Splasher di fase menengah mempercepat konversi area pada frontier yang jauh. Karena itu, ketika permainan memasuki fase akhir, akumulasi wilayah bot utama sudah cukup besar untuk menutup pertandingan sebelum bot alternatif 2 sempat memaksimalkan keunggulan jangka panjang yang biasanya baru terasa pada ronde yang lebih tinggi.
 
 
