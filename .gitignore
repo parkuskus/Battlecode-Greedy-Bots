@@ -220,3 +220,4 @@ specs-desc.md
 *.pdf
 !docs/Laporan/*.pdf
 !docs/Laporan/**/*.pdf
+!docs/postmortem/**/*.pdf
