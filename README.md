@@ -1,5 +1,5 @@
 # Jambi X Bekasi - Battlecode 2026 Greedy Bots
-
+![Battlecode Map](cover.png)
 ## Overview
 
 This project is a submission for **IF2211 Algorithm Strategy (Strategi Algoritma)** at Institut Teknologi Bandung. The task is to design competitive bots for **Battlecode 2025**, a real-time strategy game where teams of robots compete to control territory by painting it with their team's color.
