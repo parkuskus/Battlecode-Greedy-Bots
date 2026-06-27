@@ -1,55 +1,69 @@
-# Tugas Besar 1 IF2211 Strategi Algoritma
-## Jambi X Bekasi - Battlecode 2025 Greedy Bots
+# Jambi X Bekasi - Battlecode 2026 Greedy Bots
 
-Repositori ini berisi implementasi tiga bot Battlecode 2025 berbasis algoritma greedy:
-- `main_bot` (bot utama, final)
-- `alternative_bots_1` (varian offensive)
-- `alternative_bots_2` (varian coverage-maximizing)
+## Overview
 
-Selain source bot, repositori ini juga berisi laporan lengkap LaTeX (`docs/`).
+This project is a submission for **IF2211 Algorithm Strategy (Strategi Algoritma)** at Institut Teknologi Bandung. The task is to design competitive bots for **Battlecode 2025**, a real-time strategy game where teams of robots compete to control territory by painting it with their team's color.
 
-## Tim
-- Kevin Wirya Valerian (13524019)
-- Muhammad Aufar Rizqi Kusuma (13524061)
-- Athilla Zaidan Zidna Fann (13524068)
+The core challenge is to make locally optimal decisions at each robot's turn — a natural fit for **greedy algorithms**. Each bot in this repository represents a different greedy philosophy: balanced expansion, aggressive offense, or maximum area coverage. All three approaches emerge from the same algorithmic question: *given limited information and one action per turn, what is the best move right now?*
 
-## Ringkasan Strategi
+The game involves four robot types (Soldiers, Splashers, Moppers, and Towers), a paint economy that must be managed carefully, and a map that rewards both territorial control and combat pressure. Strategy shifts across three phases (early, mid, late) add an additional layer of decision-making that each bot handles differently.
 
-### 1. `main_bot` - `scoring-based nearest-target` (final)
-Fokus utama:
-- Tower-first expansion yang tetap seimbang dengan combat oportunistik.
-- Soldier dengan state `EXPLORE`, `REFILL`, `COMBAT`, `BUILD_TOWER`, `BUILD_SRP`.
-- Splasher untuk akselerasi coverage (menghindari splash berisiko ke tower musuh).
-- Mopper sebagai support stabilizer (mop swing, cleanup enemy paint, transfer paint).
-- Tower spawn berbasis fase (early Soldier-heavy, mid balanced, late Splasher-heavy).
+---
 
-Kekuatan utama:
-- Stabil lintas fase game (early-mid-late).
-- Ekspansi + sustain cenderung konsisten di banyak map.
+This repository contains implementations of three Battlecode 2025 bots based on greedy algorithms:
 
-### 2. `alternative_bots_1` - `Greedy Offensive`
-Fokus utama:
-- Tekanan ofensif tinggi: `RUSH`/`ATTACK` cepat ke arah target musuh.
-- Splasher dan Soldier lebih agresif mengejar momentum serang.
-- Build/refill tetap ada tetapi bukan objektif utama.
+- `main_bot` (primary bot, final submission)
+- `alternative_bots_1` (offensive variant)
+- `alternative_bots_2` (coverage-maximizing variant)
 
-Kekuatan utama:
-- Bisa memberi pressure tinggi pada map/map state yang cocok.
+In addition to the bot source code, the repository also includes a complete LaTeX report (`docs/`).
 
-Trade-off:
-- Lebih sensitif terhadap kegagalan early push dan manajemen resource.
+## Strategy Summary
 
-### 3. `alternative_bots_2` - `coverage-maximizing greedy`
-Fokus utama:
-- Coverage-first untuk unggul area (termasuk skenario tiebreak akhir).
-- Soldier `REFILL`, `COMBAT`, `BUILD`, `SRP`, `COVER`.
-- Sector partitioning dan eksplorasi yang minim overlap.
-- Spawn phase-based berorientasi coverage.
+### 1. `main_bot` - Scoring-Based Nearest Target (Final)
 
-Kekuatan utama:
-- Kontrol area yang stabil pada map terbuka/semi-terbuka.
+**Core focus:**
+- Tower-first expansion balanced with opportunistic combat.
+- Soldiers with states: `EXPLORE`, `REFILL`, `COMBAT`, `BUILD_TOWER`, `BUILD_SRP`.
+- Splashers for accelerated coverage (while avoiding risky splashes near enemy towers).
+- Moppers as support stabilizers (mop swing, enemy paint cleanup, paint transfer).
+- Phase-based tower spawning: Soldier-heavy early, balanced mid, Splasher-heavy late.
 
-## Struktur Proyek
+**Strengths:**
+- Stable across all game phases (early, mid, late).
+- Consistent expansion and sustain across a wide variety of maps.
+
+---
+
+### 2. `alternative_bots_1` - Greedy Offensive
+
+**Core focus:**
+- High offensive pressure: fast `RUSH`/`ATTACK` toward enemy targets.
+- Splashers and Soldiers more aggressively pursue attack momentum.
+- Build/refill actions are present but not the primary objective.
+
+**Strengths:**
+- Can apply significant pressure on maps and game states that favor aggression.
+
+**Trade-offs:**
+- More sensitive to early push failure and resource mismanagement.
+
+---
+
+### 3. `alternative_bots_2` - Coverage-Maximizing Greedy
+
+**Core focus:**
+- Coverage-first strategy to dominate area control (including tiebreak scenarios at game end).
+- Soldier states: `REFILL`, `COMBAT`, `BUILD`, `SRP`, `COVER`.
+- Sector partitioning and low-overlap exploration.
+- Coverage-oriented phase-based spawning.
+
+**Strengths:**
+- Stable area control on open and semi-open maps.
+
+---
+
+## Project Structure
 
 ```text
 .
@@ -69,48 +83,61 @@ Kekuatan utama:
 └── README.md
 ```
 
-Catatan:
-- `artifacts/engine/engine.jar` dan artifact client sudah disediakan di repo ini.
-- Output replay pertandingan headless disimpan di folder `matches/`.
+**Notes:**
+- `artifacts/engine/engine.jar` and the client artifact are already provided in this repository.
+- Headless match replay output is saved to the `matches/` folder.
 
-## Prasyarat
-- JDK 21 (wajib)
-- OS: Windows/Linux/macOS
-- (Opsional) TeX Live + `latexmk` jika ingin build laporan PDF
+## Prerequisites
+
+- JDK 21 (required)
+- OS: Windows / Linux / macOS
+- (Optional) TeX Live + `latexmk` if you want to build the PDF report
 
 ## Quick Start
 
-### 1. Build project
+### 1. Build the project
+
 ```bash
 ./gradlew build
 ```
-### 2. Jalankan App
-Untuk menjalankan App, jalankan "Stima Battle Client.exe" di folder client
 
-### 3. Lihat bot yang tersedia
+### 2. Run the App
+
+To launch the app, run **"Stima Battle Client.exe"** from the client folder.
+
+### 3. List available bots
+
 ```bash
 ./gradlew -q listPlayers
 ```
 
-Output yang diharapkan:
+Expected output:
 - `main_bot`
 - `alternative_bots_1`
 - `alternative_bots_2`
 
-## Konfigurasi `gradle.properties`
-File ini berisi default untuk run task:
-- `teamA`
-- `teamB`
-- `maps`
-- `debug`
-- `outputVerbose`
-- `showIndicators`
-- `validateMaps`
-- `alternateOrder`
+## Configuring `gradle.properties`
 
-Kamu bisa:
-- mengubah default di file ini, atau
-- override langsung lewat `-Pkey=value` saat menjalankan command.
+This file contains defaults for the run task:
 
-## Build Laporan PDF
-Laporan ada di `docs/folder/` dengan entry point `docs/folder/main.tex`.
+| Property | Description |
+|----------|-------------|
+| `teamA` | Bot assigned to Team A |
+| `teamB` | Bot assigned to Team B |
+| `maps` | Map(s) to play on |
+| `debug` | Enable debug mode |
+| `outputVerbose` | Verbose console output |
+| `showIndicators` | Show debug indicators in client |
+| `validateMaps` | Validate maps before running |
+| `alternateOrder` | Alternate team spawn order |
+
+You can either edit the defaults directly in this file, or override any property at runtime using `-Pkey=value`.
+
+
+## Team
+
+| Name | NIM |
+|------|-----|
+| Kevin Wirya Valerian | 13524019 |
+| Muhammad Aufar Rizqi Kusuma | 13524061 |
+| Athilla Zaidan Zidna Fann | 13524068 |
